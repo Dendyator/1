@@ -8,7 +8,9 @@ import (
 )
 
 var ErrInvalidString = errors.New("invalid string")
+
 var letter []string
+
 var lastLetter string
 
 func remove(s []string) []string {
@@ -19,7 +21,7 @@ func remove(s []string) []string {
 func Unpack(input string) (string, error) {
 	for i := 10; i <= 99; i++ {
 		re := regexp.MustCompile(strconv.Itoa(i))
-		if re.MatchString(input) == true {
+		if re.MatchString(input) {
 			return "", ErrInvalidString
 		}
 	}
@@ -27,11 +29,13 @@ func Unpack(input string) (string, error) {
 	if len(part) == 0 {
 		return "", nil
 	}
-	if strings.IndexRune("0123456789", part[0]) != -1 {
+
+	if strings.IndexRune("0123456789", part[0]) != -1 { //nolint:gosimple
 		return "", ErrInvalidString
 	}
+
 	for _, symbol := range part {
-		if strings.IndexRune("0123456789", symbol) == -1 {
+		if strings.IndexRune("0123456789", symbol) == -1 { //nolint:gosimple
 			letter = append(letter, string(symbol))
 			lastLetter = string(symbol)
 		} else {
@@ -40,6 +44,7 @@ func Unpack(input string) (string, error) {
 			letter = append(letter, strings.Repeat(lastLetter, num))
 		}
 	}
+
 	a := strings.Join(letter, "")
 	return a, nil
 }
