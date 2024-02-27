@@ -12,6 +12,7 @@ var ErrInvalidString = errors.New("invalid string")
 func remove(s []string) []string {
 	return s[:len(s)-1]
 }
+
 func Unpack(input string) (string, error) {
 	var letter []string
 	var lastLetter string
