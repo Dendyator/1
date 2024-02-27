@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-var ErrInvalidString = errors.New("invalid string")
-
-var letter []string
-
-var lastLetter string
+var (
+	ErrInvalidString = errors.New("invalid string")
+	letter           []string
+	lastLetter       string
+)
 
 func remove(s []string) []string {
 	return s[:len(s)-1]
