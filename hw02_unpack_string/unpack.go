@@ -40,6 +40,6 @@ func Unpack(input string) (string, error) {
 		}
 	}
 	a := strings.Join(letter, "")
-	letter = nil
+	letter = []string{}
 	return a, nil
 }
