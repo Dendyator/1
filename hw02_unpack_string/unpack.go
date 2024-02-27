@@ -7,16 +7,14 @@ import (
 	"strings"
 )
 
-var (
-	ErrInvalidString = errors.New("invalid string")
-	letter           []string
-	lastLetter       string
-)
+var ErrInvalidString = errors.New("invalid string")
 
 func remove(s []string) []string {
 	return s[:len(s)-1]
 }
 func Unpack(input string) (string, error) {
+	var letter []string
+	var lastLetter string
 	for i := 10; i <= 99; i++ {
 		re := regexp.MustCompile(strconv.Itoa(i))
 		if re.MatchString(input) {
