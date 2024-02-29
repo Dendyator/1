@@ -15,17 +15,17 @@ func Top10(text string) []string {
 	if len(text) == 0 {
 		return nil
 	}
-	sortedNumbers := make([][2]string, 0, len(scoreMap))
+	a := make([][2]string, 0, len(scoreMap))
 	for word, number := range scoreMap {
-		sortedNumbers = append(sortedNumbers, [2]string{word, strconv.Itoa(number)})
+		a = append(a, [2]string{word, strconv.Itoa(number)})
 	}
-	sort.Slice(sortedNumbers, func(i, j int) bool {
-		return sortedNumbers[i][1] > sortedNumbers[j][1] || (sortedNumbers[i][1] == sortedNumbers[j][1]) && sortedNumbers[i][0] < sortedNumbers[j][0]
+	sort.Slice(a, func(i, j int) bool {
+		return a[i][1] > a[j][1] || (a[i][1] == a[j][1]) && a[i][0] < a[j][0]
 	})
-	sortedNumbers = sortedNumbers[:10]
-	result := []string{}
+	a = a[:10]
+	var result []string
 	for i := 0; i < 10; i++ {
-		word := sortedNumbers[i][0]
+		word := a[i][0]
 		result = append(result, word)
 	}
 	return result
