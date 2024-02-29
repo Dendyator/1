@@ -7,9 +7,10 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var (
+	taskWithAsteriskIsCompleted = false
 
-var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
+	text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
 	ступеньки собственным затылком:  бум-бум-бум.  Другого  способа
 	сходить  с  лестницы  он  пока  не  знает.  Иногда ему, правда,
@@ -42,7 +43,9 @@ var text = `Как видите, он  спускается  по  лестни�
 	иногда,  особенно  когда  папа  дома,  он больше любит тихонько
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
-var text2 = "aaa bbb ccc ccc ccc ddd ddd eee fff ggg kkk hhh hhh hhh hhh uu uu dd dd z z z z z z z qqqqq qqqq qqqq qqqq"
+	
+	text2 = "aaa bbb ccc ccc ccc ddd ddd eee fff ggg kkk hhh hhh hhh hhh uu uu dd dd z z z z z z z qqqqq qqqq qqqq qqqq"
+)
 
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
@@ -81,6 +84,7 @@ func TestTop10(t *testing.T) {
 		}
 	})
 }
+
 func TestTop10v2(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
 		require.Len(t, Top10(""), 0)
