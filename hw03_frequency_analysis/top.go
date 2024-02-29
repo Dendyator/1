@@ -22,9 +22,11 @@ func Top10(text string) []string {
 	sort.Slice(a, func(i, j int) bool {
 		return a[i][1] > a[j][1] || (a[i][1] == a[j][1]) && a[i][0] < a[j][0]
 	})
-	a = a[:10]
+	if len(a) > 10 {
+		a = a[:10]
+	}
 	var result []string
-	for i := 0; i < 10; i++ {
+	for i := 0; i < len(a); i++ {
 		word := a[i][0]
 		result = append(result, word)
 	}
