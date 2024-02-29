@@ -25,7 +25,7 @@ func Top10(text string) []string {
 	if len(a) > 10 {
 		a = a[:10]
 	}
-	var result []string
+	result := []string{}
 	for i := 0; i < len(a); i++ {
 		word := a[i][0]
 		result = append(result, word)

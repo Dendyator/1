@@ -43,7 +43,7 @@ var (
 	иногда,  особенно  когда  папа  дома,  он больше любит тихонько
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
-	
+
 	text2 = "aaa bbb ccc ccc ccc ddd ddd eee fff ggg kkk hhh hhh hhh hhh uu uu dd dd z z z z z z z qqqqq qqqq qqqq qqqq"
 )
 
