@@ -2,44 +2,34 @@ package hw02unpackstring
 
 import (
 	"errors"
-	"regexp"
-	"strconv"
 	"strings"
+	"unicode"
 )
 
 var ErrInvalidString = errors.New("invalid string")
 
-func remove(s []string) []string {
-	return s[:len(s)-1]
-}
-
 func Unpack(input string) (string, error) {
-	var letter []string
-	var lastLetter string
-	for i := 10; i <= 99; i++ {
-		re := regexp.MustCompile(strconv.Itoa(i))
-		if re.MatchString(input) {
+	a := strings.Builder{}
+	part := []rune(input)
+	for k, v := range part {
+		if unicode.IsDigit(v) && k == 0 || unicode.IsDigit(v) && unicode.IsDigit(part[k-1]) {
 			return "", ErrInvalidString
 		}
-	}
-	part := []rune(input)
-	if len(part) == 0 {
-		return "", nil
-	}
-	if strings.IndexRune("0123456789", part[0]) != -1 { //nolint:gosimple
-		return "", ErrInvalidString
-	}
-	for _, symbol := range part {
-		if strings.IndexRune("0123456789", symbol) == -1 { //nolint:gosimple
-			letter = append(letter, string(symbol))
-			lastLetter = string(symbol)
-		} else {
-			letter = remove(letter)
-			num := strings.IndexRune("0123456789", symbol)
-			letter = append(letter, strings.Repeat(lastLetter, num))
+		if (k < len(part)-1 && unicode.IsLetter(v) && (unicode.IsDigit(part[k+1]) == false)) || (k == len(part)-1 && unicode.IsLetter(v)) {
+			a.WriteRune(v)
+		}
+		if k < len(part)-1 && unicode.IsSpace(v) && (unicode.IsDigit(part[k+1]) == false) {
+			a.WriteRune(v)
+		}
+		if (unicode.IsDigit(v) && unicode.IsLetter(part[k-1])) || (unicode.IsDigit(v) && unicode.IsSpace(part[k-1])) {
+			b := strings.Repeat(string(part[k-1]), int(v)-48)
+			c := []rune(b)
+			for _, e := range c {
+				a.WriteRune(e)
+			}
 		}
 	}
-	a := strings.Join(letter, "")
-	letter = nil //nolint
-	return a, nil
+	b := a.String()
+	a.Reset()
+	return b, nil
 }
