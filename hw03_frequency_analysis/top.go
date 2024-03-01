@@ -1,10 +1,15 @@
 package hw03frequencyanalysis
 
 import (
-	"sort"
-	"strconv"
+	"cmp"
+	"slices"
 	"strings"
 )
+
+type Words struct {
+	word  string
+	score int
+}
 
 func Top10(text string) []string {
 	words := strings.Fields(text)
@@ -15,20 +20,26 @@ func Top10(text string) []string {
 	if len(text) == 0 {
 		return nil
 	}
-	a := make([][2]string, 0, len(scoreMap))
-	for word, number := range scoreMap {
-		a = append(a, [2]string{word, strconv.Itoa(number)})
+
+	topWords := make([]Words, 0, len(scoreMap))
+	for k, v := range scoreMap {
+		topWords = append(topWords, Words{word: k, score: v})
 	}
-	sort.Slice(a, func(i, j int) bool {
-		return a[i][1] > a[j][1] || (a[i][1] == a[j][1]) && a[i][0] < a[j][0]
+
+	slices.SortFunc(topWords, func(a, b Words) int {
+		if n := cmp.Compare(b.score, a.score); n != 0 {
+			return n
+		}
+		return cmp.Compare(a.word, b.word)
 	})
-	if len(a) > 10 {
-		a = a[:10]
+
+	if len(topWords) > 10 {
+		topWords = topWords[:10]
 	}
-	result := []string{}
-	for i := 0; i < len(a); i++ {
-		word := a[i][0]
-		result = append(result, word)
+
+	var result []string
+	for i := 0; i < len(topWords); i++ {
+		result = append(result, topWords[i].word)
 	}
 	return result
 }
