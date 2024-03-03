@@ -1,4 +1,4 @@
-module github.com/Dendyator/1/tree/hw01_hello_otus
+module github.com/Dendyator/1/hw01_hello_otus
 
 go 1.19
 
