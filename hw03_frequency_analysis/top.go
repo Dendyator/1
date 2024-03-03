@@ -7,21 +7,26 @@ import (
 )
 
 type Words struct {
-	word  string
+	word string
+
 	score int
 }
 
 func Top10(text string) []string {
 	words := strings.Fields(text)
+
 	scoreMap := make(map[string]int)
+
 	for _, word := range words {
 		scoreMap[word]++
 	}
+
 	if len(text) == 0 {
 		return nil
 	}
 
 	topWords := make([]Words, 0, len(scoreMap))
+
 	for k, v := range scoreMap {
 		topWords = append(topWords, Words{word: k, score: v})
 	}
@@ -38,6 +43,7 @@ func Top10(text string) []string {
 	}
 
 	result := []string{}
+
 	for i := 0; i < len(topWords); i++ {
 		result = append(result, topWords[i].word)
 	}

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Change to true if needed.
 var (
 	taskWithAsteriskIsCompleted = false
 
@@ -44,7 +43,8 @@ var (
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
-	text2 = "aaa bbb ccc ccc ccc ddd ddd eee fff ggg kkk hhh hhh hhh hhh uu uu dd dd z z z z z z z z z z qqqqq qqqq qqqq qqqq"
+	text2 = "aaa bbb ccc ccc ccc ddd ddd eee fff ggg kkk hhh hhh hhh hhh &&" +
+		" uu uu dd dd z z z z z z z z z z qqqqq qqqq qqqq qqqq"
 )
 
 func TestTop10(t *testing.T) {

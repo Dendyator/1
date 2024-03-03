@@ -1,4 +1,4 @@
-module example.com/m/v2
+module github.com/Dendyator/1/hw03_frequency_analysis
 
 go 1.19
 
