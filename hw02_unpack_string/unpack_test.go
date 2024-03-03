@@ -9,7 +9,8 @@ import (
 
 func TestUnpack(t *testing.T) {
 	tests := []struct {
-		input    string
+		input string
+
 		expected string
 	}{
 		{input: "a4bc2d5e", expected: "aaaabccddddde"},
