@@ -68,7 +68,6 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 		require.Nil(t, val)
 	})
-	
 	t.Run("ejection", func(t *testing.T) {
 		c := NewCache(3)
 
@@ -87,9 +86,7 @@ func TestCache(t *testing.T) {
 		val, ok := c.Get("aaa")
 		require.False(t, ok)
 		require.Nil(t, val)
-
 	})
-
 	t.Run("ejection oldest", func(t *testing.T) {
 		c := NewCache(3)
 
@@ -121,7 +118,6 @@ func TestCache(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, 100, val)
 	})
-
 }
 
 func TestCacheMultithreading(_ *testing.T) {
