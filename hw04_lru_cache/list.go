@@ -21,7 +21,7 @@ type list struct {
 	len  int
 }
 
-func NewList() List { return new(list).Init() }
+func NewList() List { return new(list).init() }
 
 func (e *ListItem) Next() *ListItem {
 	if p := e.next; e.list != nil && p != &e.list.root {
@@ -37,7 +37,7 @@ func (e *ListItem) Prev() *ListItem {
 	return nil
 }
 
-func (l *list) Init() *list {
+func (l *list) init() *list {
 	l.root.next = &l.root
 	l.root.prev = &l.root
 	l.len = 0
@@ -62,7 +62,7 @@ func (l *list) Back() *ListItem {
 
 func (l *list) lazyInit() {
 	if l.root.next == nil {
-		l.Init()
+		l.init()
 	}
 }
 

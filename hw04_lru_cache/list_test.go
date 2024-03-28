@@ -53,14 +53,46 @@ func TestList(t *testing.T) {
 		l := NewList()
 
 		l.PushFront(10) // [10]
-		l.PushBack(20)  // [10, 20]
-		l.PushBack(30)  // [10, 20, 30]
+
+		require.Equal(t, 1, l.Len())
+		require.Equal(t, 10, l.Front().Value)
+		require.Equal(t, 10, l.Back().Value)
+
+		l.PushBack(20) // [10, 20]
+
+		require.Equal(t, 2, l.Len())
+		require.Equal(t, 10, l.Front().Value)
+		require.Equal(t, 20, l.Back().Value)
+
+		l.PushBack(30) // [10, 20, 30]
+
+		require.Equal(t, 3, l.Len())
+		require.Equal(t, 10, l.Front().Value)
+		require.Equal(t, 30, l.Back().Value)
+
 		l.PushFront(50) // [50, 10, 20, 30]
+
+		require.Equal(t, 4, l.Len())
+		require.Equal(t, 50, l.Front().Value)
+		require.Equal(t, 30, l.Back().Value)
+
 		l.PushFront(70) // [70, 50, 10, 20, 30]
+
+		require.Equal(t, 5, l.Len())
+		require.Equal(t, 70, l.Front().Value)
+		require.Equal(t, 30, l.Back().Value)
+
 		l.PushBack(600) // [70, 50, 10, 20, 30, 600]
+
+		require.Equal(t, 6, l.Len())
+		require.Equal(t, 70, l.Front().Value)
+		require.Equal(t, 600, l.Back().Value)
+
 		l.PushFront(11) // [11, 70, 50, 10, 20, 30, 600]
 
 		require.Equal(t, 7, l.Len())
+		require.Equal(t, 11, l.Front().Value)
+		require.Equal(t, 600, l.Back().Value)
 
 		l.Remove(l.Back()) // [11, 70, 50, 10, 20, 30]
 
