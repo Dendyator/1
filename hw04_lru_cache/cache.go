@@ -69,5 +69,5 @@ func (c *lruCache) Clear() {
 	c.Lock()
 	defer c.Unlock()
 	c.items = map[string]*cacheMapElement{}
-	c.queue = nil
+	c.queue = NewList()
 }
