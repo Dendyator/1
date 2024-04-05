@@ -12,7 +12,7 @@ type lruCache struct {
 	items    map[string]*cacheMapElement
 	capacity int
 	queue    List
-	sync.RWMutex
+	mu       sync.RWMutex
 }
 
 func NewCache(capacity int) Cache {
@@ -29,8 +29,8 @@ type cacheMapElement struct {
 }
 
 func (c *lruCache) Set(key string, value interface{}) bool {
-	c.Lock()
-	defer c.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	v, ok := c.items[key]
 	if !ok {
 		el := c.queue.PushFront(key)
@@ -45,6 +45,7 @@ func (c *lruCache) Set(key string, value interface{}) bool {
 			c.queue.Remove(backEl)
 			delete(c.items, backElementKey.(string))
 		}
+
 	} else {
 		v.Value = value
 		c.queue.MoveToFront(v.el)
@@ -54,8 +55,8 @@ func (c *lruCache) Set(key string, value interface{}) bool {
 }
 
 func (c *lruCache) Get(key string) (interface{}, bool) {
-	c.RLock()
-	defer c.RUnlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	v, ok := c.items[key]
 	if !ok {
 		return nil, false
@@ -66,8 +67,7 @@ func (c *lruCache) Get(key string) (interface{}, bool) {
 }
 
 func (c *lruCache) Clear() {
-	c.Lock()
-	defer c.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.items = map[string]*cacheMapElement{}
-	c.queue = NewList()
 }
