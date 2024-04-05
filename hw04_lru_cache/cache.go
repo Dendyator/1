@@ -45,7 +45,6 @@ func (c *lruCache) Set(key string, value interface{}) bool {
 			c.queue.Remove(backEl)
 			delete(c.items, backElementKey.(string))
 		}
-
 	} else {
 		v.Value = value
 		c.queue.MoveToFront(v.el)
