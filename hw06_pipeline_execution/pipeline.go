@@ -35,6 +35,5 @@ func run(in In, done In, stage Stage) Out {
 		}
 
 	}()
-
 	return stage(inner)
 }
