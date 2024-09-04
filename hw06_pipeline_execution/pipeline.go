@@ -1,73 +1,40 @@
-package main
-
-import (
-	"fmt"
-	"strconv"
-)
+package hw06pipelineexecution
 
 type (
 	In  = <-chan interface{}
 	Out = In
 	Bi  = chan interface{}
 )
-
 type Stage func(in In) (out Out)
 
-func main() {
+func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	out := in
 
-	g := func(_ string, f func(v interface{}) interface{}) func(in <-chan interface{}) (out <-chan interface{}) {
+	for _, s := range stages {
+		out = run(out, done, s)
+	}
+	return out
+}
 
-		return func(in <-chan interface{}) <-chan interface{} {
-			out := make(chan interface{})
-			go func() {
-				defer close(out)
-				for v := range in {
-					out <- f(v)
+func run(in In, done In, stage Stage) Out {
+	inner := make(Bi)
+
+	go func() {
+		defer close(inner)
+
+		for {
+			select {
+			case v, ok := <-in:
+				if !ok {
+					return
 				}
-			}()
-			return out
+				inner <- v
+			case <-done:
+				return
+			}
 		}
-	}
 
-	//d := g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 })
+	}()
 
-	stages := []Stage{
-		g("Dummy", func(v interface{}) interface{} { return v }),
-		g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
-		g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
-		g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
-	}
-
-	generator := func(integers ...int) <-chan interface{} {
-		intStream := make(chan interface{})
-		go func() {
-			defer close(intStream)
-			for _, i := range integers {
-				intStream <- i
-			}
-		}()
-		return intStream
-	}
-	intStream := generator(2)
-
-	street := func(z <-chan interface{}) <-chan interface{} {
-		high := make(chan interface{})
-		go func() {
-			//defer close(high)
-			high <- z
-			var delta interface{}
-			for _, v := range stages {
-				delta = v(high)
-				high <- delta
-			}
-		}()
-		return high
-	}
-
-	s := street(intStream)
-
-	for num := range s {
-		fmt.Println(num)
-	}
-
+	return stage(inner)
 }
