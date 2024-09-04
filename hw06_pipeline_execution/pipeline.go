@@ -33,7 +33,6 @@ func run(in In, done In, stage Stage) Out {
 				return
 			}
 		}
-
 	}()
 	return stage(inner)
 }
