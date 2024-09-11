@@ -44,7 +44,7 @@ func TestCopy2(t *testing.T) {
 }
 
 func TestCopy3(t *testing.T) {
-	t.Run("big offset", func(t *testing.T) {
+	t.Run("len new file", func(t *testing.T) {
 		fromPath := "D:/Coding/Projects/NinjaProject/Uroki/Les1/input.txt"
 		offset = 3000
 		limit = 1000
@@ -65,5 +65,6 @@ func TestCopy3(t *testing.T) {
 		}
 
 		require.Len(t, buf, 1000)
+		require.NoError(t, err)
 	})
 }
