@@ -2,12 +2,16 @@ package main
 
 import (
 	"flag"
+	"fmt"
 )
 
 var (
 	from, to      string
 	limit, offset int64
 )
+
+var fromPath = "D:/Coding/Projects/NinjaProject/Uroki/Les1/input.txt"
+var toPath = "D:/Coding/Projects/NinjaProject/Uroki/Les1/output.txt"
 
 func init() {
 	flag.StringVar(&from, "from", "", "file to read from")
@@ -18,5 +22,8 @@ func init() {
 
 func main() {
 	flag.Parse()
-	// Place your code here.
+	err := Copy(fromPath, toPath, 3000, 1000)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
