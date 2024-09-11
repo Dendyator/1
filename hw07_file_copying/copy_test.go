@@ -19,7 +19,7 @@ func TestCopy(t *testing.T) {
 		offset = 6000
 		limit = 0
 
-		err := Copy(fromPath, toPath, 5000, 10000)
+		err := Copy(fromPath, toPath, offset, limit)
 		if err != nil {
 			fmt.Println(err)
 		}
