@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
-	"github.com/cheggaaa/pb/v3"
 	"io"
 	"log"
 	"os"
 	"time"
+
+	"github.com/cheggaaa/pb/v3" //nolint
 )
 
 var (
@@ -15,7 +16,6 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-
 	fileFrom, err := os.Open(fromPath)
 	if err != nil {
 		return ErrUnsupportedFile
@@ -35,7 +35,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return errOp
 	}
 
-	if limit == 0 || int(limit) > len(buf) {
+	if limit == 0 || int(limit) > len(buf) { //nolint
 		fileTo, _ := os.Create(toPath)
 		_, err = fileTo.Write(buf[offset:])
 		if err != nil {
