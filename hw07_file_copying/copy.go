@@ -35,26 +35,23 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return errOp
 	}
 
+	fileTo, _ := os.Create(toPath)
+
 	if limit == 0 || int(limit) > len(buf) { //nolint
-		fileTo, _ := os.Create(toPath)
 		_, err = fileTo.Write(buf[offset:])
 		if err != nil {
 			log.Fatal("не записал")
 		}
-		e := fileTo.Close()
-		if e != nil {
-			return e
-		}
 	} else {
-		fileTo, _ := os.Create(toPath)
 		_, err = fileTo.Write(buf[offset : offset+limit])
 		if err != nil {
 			log.Fatal("не записал")
 		}
-		e := fileTo.Close()
-		if e != nil {
-			return e
-		}
+	}
+
+	errCl := fileTo.Close()
+	if errCl != nil {
+		return errCl
 	}
 
 	count := 100
