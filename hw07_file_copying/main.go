@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 )
 
 var (
@@ -17,5 +18,13 @@ func init() {
 }
 
 func main() {
+	from = "D:/Coding/GitHub/1/hw07_file_copying/testdata/input.txt"
+	to = "D:/Coding/GitHub/1/hw07_file_copying/testdata/out.txt"
 	flag.Parse()
+
+	err := Copy(from, to, limit, offset)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("cmp out.txt testdata/out_offset%d_limit%d.txt", limit, offset)
 }
