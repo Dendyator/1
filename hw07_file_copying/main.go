@@ -22,9 +22,9 @@ func main() {
 	to = "D:/Coding/GitHub/1/hw07_file_copying/testdata/out.txt"
 	flag.Parse()
 
-	err := Copy(from, to, limit, offset)
+	err := Copy(from, to, offset, limit)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("cmp out.txt testdata/out_offset%d_limit%d.txt", limit, offset)
+	fmt.Printf("cmp out.txt %s_offset%d_limit%d.txt", to, offset, limit)
 }
