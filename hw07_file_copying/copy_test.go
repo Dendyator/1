@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 const toPath = "D:/Coding/GitHub/1/hw07_file_copying/testdata/out.txt"
