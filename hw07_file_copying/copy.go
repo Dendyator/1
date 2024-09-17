@@ -37,7 +37,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	fileTo, _ := os.Create(toPath)
 
-	if limit == 0 || int(limit) > len(buf) {
+	if limit == 0 || int(limit)+int(offset) > len(buf) {
 		_, err = fileTo.Write(buf[offset:])
 		if err != nil {
 			log.Fatal("не записал")
