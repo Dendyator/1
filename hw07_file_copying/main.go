@@ -18,8 +18,8 @@ func init() {
 }
 
 func main() {
-	from = "D:/Coding/GitHub/1/hw07_file_copying/testdata/input.txt" //nolint
-	to = "D:/Coding/GitHub/1/hw07_file_copying/testdata/out.txt"
+	from = "./testdata/input.txt" //nolint
+	to = "./testdata/out.txt"
 	flag.Parse()
 
 	err := Copy(from, to, offset, limit)

@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const toPath = "D:/Coding/GitHub/1/hw07_file_copying/testdata/out.txt"
+const toPath = "./testdata/out.txt"
 
 func TestCopy(t *testing.T) {
 	t.Run("bad file", func(t *testing.T) {
-		fromPath := "D:/Coding/GitHub/1/hw07_file_copying/testdata/input1.txt"
+		fromPath := "./testdata/input1.txt"
 
 		offset = 6000
 		limit = 0
@@ -30,7 +30,7 @@ func TestCopy(t *testing.T) {
 
 func TestCopy2(t *testing.T) {
 	t.Run("big offset", func(t *testing.T) {
-		fromPath := "D:/Coding/GitHub/1/hw07_file_copying/testdata/input.txt"
+		fromPath := "./testdata/input.txt"
 		offset = 8000
 		limit = 0
 
@@ -45,7 +45,7 @@ func TestCopy2(t *testing.T) {
 
 func TestCopy3(t *testing.T) {
 	t.Run("len new file", func(t *testing.T) {
-		fromPath := "D:/Coding/GitHub/1/hw07_file_copying/testdata/input.txt"
+		fromPath := "./testdata/input.txt"
 		offset = 3000
 		limit = 1000
 
