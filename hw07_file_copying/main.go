@@ -18,13 +18,9 @@ func init() {
 }
 
 func main() {
-	from = "./testdata/input.txt" //nolint
-	to = "./testdata/out.txt"
 	flag.Parse()
-
 	err := Copy(from, to, offset, limit)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("cmp out.txt %s_offset%d_limit%d.txt", to, offset, limit)
 }
