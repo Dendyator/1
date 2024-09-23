@@ -19,7 +19,7 @@ func TestRunCmd(t *testing.T) {
 		t.Fatalf("Ошибка при запуске команды: %v", err2)
 	}
 
-	expectedOutput := "test_value"
+	expectedOutput := "test_value\r\n"
 	if string(output) != expectedOutput {
 		t.Errorf("Ожидаемый результат '%s', полученный результат '%s'", expectedOutput, output)
 	}
