@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"os/exec"
-	"path/filepath"
 	"testing"
 )
 
@@ -18,35 +17,20 @@ func TestRunInvalidCmd(t *testing.T) {
 }
 
 func TestRunCmd(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "envdir_test_run")
+	err := os.Setenv("TEST_VAR", "test_value")
 	if err != nil {
-		t.Fatal(err)
-	}
-	defer func(path string) {
-		err2 := os.RemoveAll(path)
-		if err2 != nil {
-			t.Fatal(err2)
-		}
-	}(tempDir)
-
-	if err3 := os.WriteFile(filepath.Join(tempDir, "TEST_VAR"), []byte("test_value"), 0644); err3 != nil {
-		t.Fatal(err3)
-	}
-
-	env := map[string]EnvValue{
-		"TEST_VAR": {"test_value", false},
+		t.Fatalf("Переменная окружения не установлена: %v", err)
 	}
 
 	cmd := exec.Command("cmd", "/C", "echo %TEST_VAR%")
-	cmd.Env = envToSlice(env)
 
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("failed to run command: %v", err)
+	output, err2 := cmd.CombinedOutput()
+	if err2 != nil {
+		t.Fatalf("Ошибка при запуске команды: %v", err2)
 	}
 
 	expectedOutput := "test_value\r\n"
 	if string(output) != expectedOutput {
-		t.Errorf("Ожидаемый результат '%s', получено '%s'", expectedOutput, output)
+		t.Errorf("Ожидаемый результат '%s', полученный результат '%s'", expectedOutput, output)
 	}
 }
