@@ -2,9 +2,9 @@ package hw10programoptimization
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 )
 
@@ -21,45 +21,25 @@ type User struct {
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
-	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
-	}
-	return countDomains(u, domain)
-}
-
-type users [100_000]User
-
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return
-	}
-
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
-		}
-		result[i] = user
-	}
-	return
-}
-
-func countDomains(u users, domain string) (DomainStat, error) {
 	result := make(DomainStat)
+	decoder := json.NewDecoder(r)
 
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
+	for {
+		var user User
+		if err := decoder.Decode(&user); errors.Is(err, io.EOF) {
+			break
+		} else if err != nil {
+			return nil, fmt.Errorf("decoding error: %w", err)
 		}
 
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+		emailDomain := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
+		if strings.HasSuffix(emailDomain, "."+domain) {
+			// Извлекаем поддомен вместе с доменом верхнего уровня
+			parts := strings.Split(emailDomain, ".")
+			if len(parts) >= 2 {
+				domainName := strings.Join(parts[:len(parts)-1], ".") + "." + domain
+				result[domainName]++
+			}
 		}
 	}
 	return result, nil
