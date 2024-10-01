@@ -29,9 +29,11 @@ func TestRunCmd(t *testing.T) {
 	if err2 != nil {
 		t.Fatalf("Ошибка при запуске команды: %v", err2)
 	}
-	
-	expectedOutput := "test_value\n"
+
+	t.Logf("Фактический вывод: '%s'", output)
+
 	outputStr := strings.TrimSpace(string(output))
+	expectedOutput := "test_value"
 
 	if outputStr != expectedOutput {
 		t.Errorf("Ожидаемый результат '%s', полученный результат '%s'", expectedOutput, outputStr)

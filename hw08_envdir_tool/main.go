@@ -13,7 +13,6 @@ func main() {
 
 	envDir := os.Args[1]
 	cmdArgs := os.Args[2:]
-
 	env, err := ReadDir(envDir)
 	if err != nil {
 		fmt.Printf("Error setting environment variables: %v\n", err)
