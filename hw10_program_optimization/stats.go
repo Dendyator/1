@@ -32,13 +32,17 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 			return nil, fmt.Errorf("decoding error: %w", err)
 		}
 
-		emailDomain := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
-		if strings.HasSuffix(emailDomain, "."+domain) {
-			// Извлекаем поддомен вместе с доменом верхнего уровня
-			parts := strings.Split(emailDomain, ".")
-			if len(parts) >= 2 {
-				domainName := strings.Join(parts[:len(parts)-1], ".") + "." + domain
-				result[domainName]++
+		atIndex := strings.IndexByte(user.Email, '@')
+		if atIndex < 0 || atIndex+1 >= len(user.Email) {
+			continue
+		}
+
+		emailDomain := strings.ToLower(user.Email[atIndex+1:])
+
+		if len(emailDomain) > len(domain) && strings.HasSuffix(emailDomain, "."+domain) {
+			subDomain := emailDomain[:len(emailDomain)-len(domain)-1]
+			if subDomain != "" {
+				result[subDomain+"."+domain]++
 			}
 		}
 	}
