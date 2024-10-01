@@ -22,10 +22,9 @@ func envToSlice(env Environment) []string {
 	var result []string
 
 	for k, v := range env {
-		if v.NeedRemove {
-			continue
+		if !v.NeedRemove {
+			result = append(result, k+"="+v.Value)
 		}
-		result = append(result, k+"="+v.Value)
 	}
 
 	for k, v := range env {
