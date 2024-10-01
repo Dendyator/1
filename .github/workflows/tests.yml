@@ -60,10 +60,10 @@ jobs:
         if: contains('hw01_hello_otus hw07_file_copying hw08_envdir_tool hw11_telnet_client', env.BRANCH)
         working-directory: ${{ env.BRANCH }}
 
-      - name: Run CMD command
-        shell: cmd
+      - name: Run bash command
+        shell: bash
         run: |
-          echo %TEST_VAR%
+            echo $TEST_VAR
         working-directory: ${{ env.BRANCH }}
 
   tests_by_makefile:
@@ -89,3 +89,4 @@ jobs:
       - name: make test
         run: make test
         working-directory: hw12_13_14_15_calendar
+    
