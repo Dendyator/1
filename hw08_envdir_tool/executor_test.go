@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -28,9 +29,11 @@ func TestRunCmd(t *testing.T) {
 	if err2 != nil {
 		t.Fatalf("Ошибка при запуске команды: %v", err2)
 	}
-
+	
 	expectedOutput := "test_value\n"
-	if string(output) != expectedOutput {
-		t.Errorf("Ожидаемый результат '%s', полученный результат '%s'", expectedOutput, output)
+	outputStr := strings.TrimSpace(string(output))
+
+	if outputStr != expectedOutput {
+		t.Errorf("Ожидаемый результат '%s', полученный результат '%s'", expectedOutput, outputStr)
 	}
 }
