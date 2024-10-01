@@ -20,17 +20,23 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 
 func envToSlice(env Environment) []string {
 	var result []string
+	envMap := make(map[string]string)
 
 	for k, v := range env {
 		if !v.NeedRemove {
-			result = append(result, k+"="+v.Value)
+			envMap[k] = v.Value
 		}
 	}
 
 	for k, v := range env {
 		if v.NeedRemove {
-			result = append(result, k+"=")
+			delete(envMap, k)
 		}
 	}
+
+	for k, v := range envMap {
+		result = append(result, k+"="+v)
+	}
+
 	return result
 }
