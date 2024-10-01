@@ -22,14 +22,14 @@ func TestRunCmd(t *testing.T) {
 		t.Fatalf("Переменная окружения не установлена: %v", err)
 	}
 
-	cmd := exec.Command("cmd", "/C", "echo %TEST_VAR%")
+	cmd := exec.Command("bash", "-c", "echo $TEST_VAR")
 
 	output, err2 := cmd.CombinedOutput()
 	if err2 != nil {
 		t.Fatalf("Ошибка при запуске команды: %v", err2)
 	}
 
-	expectedOutput := "test_value\r\n"
+	expectedOutput := "test_value\n"
 	if string(output) != expectedOutput {
 		t.Errorf("Ожидаемый результат '%s', полученный результат '%s'", expectedOutput, output)
 	}
