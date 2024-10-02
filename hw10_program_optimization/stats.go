@@ -1,11 +1,11 @@
 package hw10programoptimization
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 )
 
 type User struct {
@@ -22,31 +22,39 @@ type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	result := make(DomainStat)
+	var users [100_000]User
+	var count int
+
 	decoder := json.NewDecoder(r)
-
-	domainBytes := []byte(domain)
-	domainLen := len(domainBytes)
-	domainSuffix := append([]byte{'.'}, domainBytes...)
-
 	for {
-		var user User
-		if err := decoder.Decode(&user); errors.Is(err, io.EOF) {
+		if count >= len(users) {
+			break
+		}
+		if err := decoder.Decode(&users[count]); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, fmt.Errorf("decoding error: %w", err)
 		}
+		count++
+	}
 
-		atIndex := bytes.LastIndexByte([]byte(user.Email), '@')
-		if atIndex < 0 || atIndex+1 >= len(user.Email) {
+	domainBytes := []byte(domain)
+	domainLen := len(domainBytes)
+	domainWithDot := append([]byte{'.'}, domainBytes...)
+
+	for i := 0; i < count; i++ {
+		user := users[i]
+
+		atIndex := strings.IndexByte(user.Email, '@')
+		if atIndex < 0 {
 			continue
 		}
 
-		emailDomain := []byte(user.Email[atIndex+1:])
-
-		if len(emailDomain) > domainLen && bytes.HasSuffix(emailDomain, domainSuffix) {
+		emailDomain := user.Email[atIndex+1:]
+		if len(emailDomain) > domainLen && strings.HasSuffix(emailDomain, string(domainWithDot)) {
 			subDomain := emailDomain[:len(emailDomain)-domainLen-1]
 			if len(subDomain) > 0 {
-				result[string(bytes.ToLower(subDomain))+"."+string(bytes.ToLower(domainBytes))]++
+				result[strings.ToLower(subDomain)+"."+strings.ToLower(domain)]++
 			}
 		}
 	}
