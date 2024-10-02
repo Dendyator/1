@@ -1,6 +1,8 @@
 module github.com/Dendyator/1/hw10_program_optimization
 
-go 1.19
+go 1.22.0
+
+toolchain go1.23.0
 
 require github.com/stretchr/testify v1.7.0
 
