@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 )
 
 type User struct {
@@ -23,6 +24,11 @@ type DomainStat map[string]int
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	result := make(DomainStat)
 	decoder := json.NewDecoder(r)
+
+	start := time.Now()
+	defer func() {
+		fmt.Printf("Execution time: %v\n", time.Since(start))
+	}()
 
 	for {
 		var user User
