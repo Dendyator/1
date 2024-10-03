@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -23,7 +24,12 @@ func TestRunCmd(t *testing.T) {
 		t.Fatalf("Переменная окружения не установлена: %v", err)
 	}
 
-	cmd := exec.Command("bash", "-c", "echo $TEST_VAR")
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/C", "echo %TEST_VAR%")
+	} else {
+		cmd = exec.Command("bash", "-c", "echo $TEST_VAR")
+	}
 
 	output, err2 := cmd.CombinedOutput()
 	if err2 != nil {
