@@ -20,6 +20,7 @@ type telnetClient struct {
 	in      io.ReadCloser
 	out     io.Writer
 	timeout time.Duration
+	closed  bool
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
@@ -36,6 +37,9 @@ func (c *telnetClient) Connect() error {
 }
 
 func (c *telnetClient) Send() error {
+	if c.closed {
+		return errors.New("connection is closed")
+	}
 	buf := make([]byte, 1024)
 	n, err := c.in.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -48,6 +52,9 @@ func (c *telnetClient) Send() error {
 }
 
 func (c *telnetClient) Receive() error {
+	if c.closed {
+		return errors.New("connection is closed")
+	}
 	buf := make([]byte, 1024)
 	n, err := c.conn.Read(buf)
 	if err != nil {
@@ -60,7 +67,8 @@ func (c *telnetClient) Receive() error {
 }
 
 func (c *telnetClient) Close() error {
-	if c.conn != nil {
+	if c.conn != nil && !c.closed {
+		c.closed = true // Update state to closed
 		return c.conn.Close()
 	}
 	return nil
