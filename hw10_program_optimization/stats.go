@@ -3,7 +3,6 @@ package hw10programoptimization
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 )
@@ -29,7 +28,7 @@ func GetDomainStatNew(r io.Reader, domain string) (DomainStat, error) {
 		if err := decoder.Decode(&user); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("decoding error: %w", err)
+			return nil, err
 		}
 
 		atIndex := strings.IndexByte(user.Email, '@')
