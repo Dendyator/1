@@ -24,8 +24,6 @@ func GetDomainStatNew(r io.Reader, domain string) (DomainStat, error) {
 	result := make(DomainStat)
 	decoder := json.NewDecoder(r)
 
-	//domainBytes := []byte(domain)
-
 	for {
 		var user User
 		if err := decoder.Decode(&user); errors.Is(err, io.EOF) {
@@ -35,16 +33,10 @@ func GetDomainStatNew(r io.Reader, domain string) (DomainStat, error) {
 		}
 
 		atIndex := strings.IndexByte(user.Email, '@')
-		if atIndex < 0 {
-			continue
-		}
-
 		emailDomain := user.Email[atIndex+1:]
 		if strings.HasSuffix(emailDomain, domain) {
 			subDomain := emailDomain[:len(emailDomain)-len(domain)-1]
-			if len(subDomain) > 0 {
-				result[strings.ToLower(subDomain)+"."+strings.ToLower(domain)]++
-			}
+			result[strings.ToLower(subDomain)+"."+strings.ToLower(domain)]++
 		}
 	}
 	return result, nil
