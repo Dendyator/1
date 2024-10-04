@@ -37,17 +37,3 @@ func BenchmarkGetDomainStatNew(b *testing.B) {
 		}
 	}
 }
-func BenchmarkGetDomainStatOld(b *testing.B) {
-	const numEntries = 100
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for j := 1; j <= numEntries; j++ {
-			data := generateTestUserData(j)
-			_, err := GetDomainStatOld(data, "com")
-			if err != nil {
-				b.Errorf("Error: %v", err)
-			}
-		}
-	}
-}
