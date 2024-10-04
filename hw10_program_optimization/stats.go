@@ -35,8 +35,7 @@ func GetDomainStatNew(r io.Reader, domain string) (DomainStat, error) {
 		atIndex := strings.IndexByte(user.Email, '@')
 		emailDomain := user.Email[atIndex+1:]
 		if strings.HasSuffix(emailDomain, domain) {
-			subDomain := emailDomain[:len(emailDomain)-len(domain)-1]
-			result[strings.ToLower(subDomain)+"."+strings.ToLower(domain)]++
+			result[strings.ToLower(emailDomain)]++
 		}
 	}
 	return result, nil
