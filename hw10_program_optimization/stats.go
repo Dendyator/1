@@ -1,12 +1,15 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
-	"errors"
+	"bufio"
+	"fmt"
 	"io"
 	"strings"
 )
 
+//go:generate easyjson -all stats.go
+
+// easyjson:json
 type User struct {
 	ID       int
 	Name     string
@@ -21,21 +24,33 @@ type DomainStat map[string]int
 
 func GetDomainStatNew(r io.Reader, domain string) (DomainStat, error) {
 	result := make(DomainStat)
-	decoder := json.NewDecoder(r)
+	scanner := bufio.NewScanner(r)
 
-	for {
-		var user User
-		if err := decoder.Decode(&user); errors.Is(err, io.EOF) {
-			break
-		} else if err != nil {
-			return nil, err
+	var user User
+	for scanner.Scan() {
+		line := scanner.Bytes()
+
+		if err := user.UnmarshalJSON(line); err != nil {
+			return nil, fmt.Errorf("decoding error: %w", err)
 		}
 
 		atIndex := strings.IndexByte(user.Email, '@')
-		emailDomain := user.Email[atIndex+1:]
-		if strings.HasSuffix(emailDomain, domain) {
-			result[strings.ToLower(emailDomain)]++
+		if atIndex < 0 || len(user.Email) <= atIndex+1 {
+			continue
 		}
+
+		emailDomain := user.Email[atIndex+1:]
+		if !strings.HasSuffix(emailDomain, domain) {
+			continue
+		}
+
+		resultTarget := strings.ToLower(emailDomain)
+		result[resultTarget]++
 	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("reading error: %w", err)
+	}
+
 	return result, nil
 }
