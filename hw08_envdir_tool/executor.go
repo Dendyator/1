@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
@@ -15,6 +16,7 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
+	fmt.Println("Debug: Environment variables:")
 	if err := command.Run(); err != nil {
 		return 1
 	}
