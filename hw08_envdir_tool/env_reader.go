@@ -37,11 +37,8 @@ func ReadDir(dir string) (Environment, error) {
 		}
 
 		value := strings.TrimRight(string(content), "\n \t")
-		if len(value) == 0 {
-			env[file.Name()] = EnvValue{NeedRemove: true}
-		} else {
-			env[file.Name()] = EnvValue{Value: strings.ReplaceAll(value, "\x00", "\n"), NeedRemove: false}
-		}
+		cleanedValue := strings.ReplaceAll(value, "\x00", "\n")
+		env[file.Name()] = EnvValue{Value: cleanedValue, NeedRemove: len(cleanedValue) == 0}
 	}
 
 	return env, nil

@@ -7,7 +7,9 @@ import (
 
 func RunCmd(cmd []string, env Environment) (returnCode int) {
 	command := exec.Command(cmd[0], cmd[1:]...) //nolint
-	command.Env = envToSlice(env)
+	currentEnv := os.Environ()
+	currentEnv = append(currentEnv, envToSlice(env)...)
+	command.Env = currentEnv
 
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
