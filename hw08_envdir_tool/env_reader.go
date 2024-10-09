@@ -32,11 +32,8 @@ func ReadDir(dir string) (Environment, error) {
 			return nil, err
 		}
 
-		lines := strings.Split(string(content), "\n")
-
-		firstLine := lines[0]
-		value := strings.ReplaceAll(firstLine, "\x00", "")
-		value = strings.TrimRight(value, " \t")
+		value := strings.ReplaceAll(string(content), "\x00", "")
+		value = strings.TrimRight(value, " \t\n")
 
 		env[file.Name()] = EnvValue{Value: value, NeedRemove: len(value) == 0}
 	}
