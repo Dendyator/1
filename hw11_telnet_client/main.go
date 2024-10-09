@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	_ "io"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -18,38 +17,43 @@ func main() {
 	flag.Parse()
 
 	if len(flag.Args()) != 2 {
-		fmt.Println("Usage: go-telnet [--timeout=timeout] host port")
-		return
+		log.Fatalf("Usage: go-telnet [--timeout=timeout] host port")
 	}
 
 	host, port := flag.Arg(0), flag.Arg(1)
 	address := net.JoinHostPort(host, port)
 
 	client := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
+	if client == nil {
+		log.Fatalf("Failed to create Telnet client. Check the provided parameters.")
+	}
 
 	if err := client.Connect(); err != nil {
-		fmt.Fprintf(os.Stderr, "...Connection failed: %v\n", err)
-		return
+		log.Fatalf("Connection failed: %v\n", err)
 	}
-	fmt.Fprintf(os.Stderr, "...Connected to %s\n", address)
+	log.Printf("Connected to %s\n", address)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT)
 	defer stop()
 
 	go func() {
 		<-ctx.Done()
-		fmt.Fprintf(os.Stderr, "\n...Connection closed by user\n")
+		log.Println("Connection closed by user")
 		client.Close()
 		os.Exit(0)
 	}()
 
 	for {
 		if err := client.Send(); err != nil {
-			fmt.Fprintln(os.Stderr, "...Connection was closed by peer or error occurred while sending:", err)
+			if err.Error() == "EOF" {
+				log.Println("EOF received, closing connection")
+				break
+			}
+			log.Println("Connection was closed by peer or error occurred while sending:", err)
 			break
 		}
 		if err := client.Receive(); err != nil {
-			fmt.Fprintln(os.Stderr, "...Connection was closed by peer or error occurred while receiving:", err)
+			log.Println("Connection was closed by peer or error occurred while receiving:", err)
 			break
 		}
 	}

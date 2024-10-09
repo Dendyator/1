@@ -42,7 +42,10 @@ func (c *telnetClient) Send() error {
 	}
 	buf := make([]byte, 1024)
 	n, err := c.in.Read(buf)
-	if err != nil && !errors.Is(err, io.EOF) {
+	if err == io.EOF {
+		return err
+	}
+	if err != nil {
 		return err
 	}
 	if n > 0 {
@@ -55,20 +58,13 @@ func (c *telnetClient) Receive() error {
 	if c.closed {
 		return errors.New("connection is closed")
 	}
-	buf := make([]byte, 1024)
-	n, err := c.conn.Read(buf)
-	if err != nil {
-		return err
-	}
-	if n > 0 {
-		_, err = c.out.Write(buf[:n])
-	}
+	_, err := io.Copy(c.out, c.conn)
 	return err
 }
 
 func (c *telnetClient) Close() error {
 	if c.conn != nil && !c.closed {
-		c.closed = true // Update state to closed
+		c.closed = true
 		return c.conn.Close()
 	}
 	return nil
