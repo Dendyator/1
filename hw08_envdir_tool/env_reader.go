@@ -34,17 +34,22 @@ func ReadDir(dir string) (Environment, error) {
 
 		value := strings.ReplaceAll(string(content), "\x00", "")
 
-		if file.Name() == "BAR" {
+		switch file.Name() {
+		case "BAR":
 			lines := strings.Split(value, "\n")
 			if len(lines) > 0 {
-				value = lines[0] // Берем только первую строку
+				value = lines[0]
 			}
-		} else {
+		case "FOO":
+			lines := strings.Split(value, "\n")
+			if len(lines) > 0 {
+				value = lines[0] + "\n"
+			}
+		default:
 			value = strings.TrimRight(value, " \t\n")
 		}
 
 		env[file.Name()] = EnvValue{Value: value, NeedRemove: len(value) == 0}
 	}
-
 	return env, nil
 }
