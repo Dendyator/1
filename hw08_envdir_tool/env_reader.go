@@ -40,11 +40,6 @@ func ReadDir(dir string) (Environment, error) {
 			if len(lines) > 0 {
 				value = lines[0]
 			}
-		case "FOO":
-			lines := strings.Split(value, "\n")
-			if len(lines) > 0 {
-				value = lines[0] + "\n"
-			}
 		default:
 			value = strings.TrimRight(value, " \t\n")
 		}
