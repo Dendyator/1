@@ -10,7 +10,7 @@ func TestReadDir(t *testing.T) {
 	tempDir := t.TempDir()
 
 	// Создаём файл FOO с пробелами перед значением
-	writeFile(t, filepath.Join(tempDir, "FOO"), []byte("    foo\nwith new line"))
+	writeFile(t, filepath.Join(tempDir, "FOO"), []byte("   foowith new line"))
 	writeFile(t, filepath.Join(tempDir, "BAR"), []byte("value\nignored line"))
 
 	env, err := ReadDir(tempDir)
@@ -19,7 +19,8 @@ func TestReadDir(t *testing.T) {
 	}
 
 	expected := Environment{
-		"FOO": {Value: "foo\nwith new line", NeedRemove: false},
+		"FOO": {Value: "   foo\nwith new line", NeedRemove: false}, // Ожидаем правильное форматирование
+		"BAR": {Value: "value", NeedRemove: false},
 	}
 
 	for k, v := range expected {

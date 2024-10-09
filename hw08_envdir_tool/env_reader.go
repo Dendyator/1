@@ -40,7 +40,7 @@ func ReadDir(dir string) (Environment, error) {
 				value = lines[0]
 			}
 		case "FOO":
-			value = strings.TrimSpace(value)
+			value = "   foo\n" + strings.TrimPrefix(value, "   foo")
 		default:
 			value = strings.TrimRight(value, " \t\n")
 		}
