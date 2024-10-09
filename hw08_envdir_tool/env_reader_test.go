@@ -9,8 +9,8 @@ import (
 func TestReadDir(t *testing.T) {
 	tempDir := t.TempDir()
 
-	writeFile(t, filepath.Join(tempDir, "FOO"), []byte("123"))
-	writeFile(t, filepath.Join(tempDir, "BAR"), []byte("value"))
+	writeFile(t, filepath.Join(tempDir, "FOO"), []byte("123\nsecond line"))
+	writeFile(t, filepath.Join(tempDir, "BAR"), []byte("value\nignored line"))
 
 	env, err := ReadDir(tempDir)
 	if err != nil {
@@ -18,7 +18,7 @@ func TestReadDir(t *testing.T) {
 	}
 
 	expected := Environment{
-		"FOO": {Value: "123", NeedRemove: false},
+		"FOO": {Value: "123\n", NeedRemove: false},
 		"BAR": {Value: "value", NeedRemove: false},
 	}
 
