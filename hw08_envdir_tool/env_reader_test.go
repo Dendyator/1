@@ -32,7 +32,7 @@ func TestReadDir(t *testing.T) {
 
 func writeFile(t *testing.T, path string, content []byte) {
 	t.Helper()
-	err := os.WriteFile(path, content, 0644)
+	err := os.WriteFile(path, content, 0644) //nolint
 	if err != nil {
 		t.Fatalf("Файл не записан: %v", err)
 	}
