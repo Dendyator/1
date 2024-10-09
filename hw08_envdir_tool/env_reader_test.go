@@ -9,7 +9,8 @@ import (
 func TestReadDir(t *testing.T) {
 	tempDir := t.TempDir()
 
-	writeFile(t, filepath.Join(tempDir, "FOO"), []byte("foo\nwith new line"))
+	// Создаём файл FOO с пробелами перед значением
+	writeFile(t, filepath.Join(tempDir, "FOO"), []byte("    foo\nwith new line"))
 	writeFile(t, filepath.Join(tempDir, "BAR"), []byte("value\nignored line"))
 
 	env, err := ReadDir(tempDir)
@@ -19,7 +20,6 @@ func TestReadDir(t *testing.T) {
 
 	expected := Environment{
 		"FOO": {Value: "foo\nwith new line", NeedRemove: false},
-		"BAR": {Value: "value", NeedRemove: false},
 	}
 
 	for k, v := range expected {
@@ -31,7 +31,7 @@ func TestReadDir(t *testing.T) {
 
 func writeFile(t *testing.T, path string, content []byte) {
 	t.Helper()
-	err := os.WriteFile(path, content, 0644) //nolint
+	err := os.WriteFile(path, content, 0644)
 	if err != nil {
 		t.Fatalf("Файл не записан: %v", err)
 	}

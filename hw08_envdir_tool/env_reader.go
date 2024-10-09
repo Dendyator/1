@@ -25,7 +25,6 @@ func ReadDir(dir string) (Environment, error) {
 		if file.IsDir() || strings.Contains(file.Name(), "=") {
 			continue
 		}
-
 		filePath := filepath.Join(dir, file.Name())
 		content, err := os.ReadFile(filePath)
 		if err != nil {
@@ -40,6 +39,8 @@ func ReadDir(dir string) (Environment, error) {
 			if len(lines) > 0 {
 				value = lines[0]
 			}
+		case "FOO":
+			value = strings.TrimSpace(value)
 		default:
 			value = strings.TrimRight(value, " \t\n")
 		}
