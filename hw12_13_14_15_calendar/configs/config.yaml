@@ -1,0 +1,10 @@
+server:
+  host: "0.0.0.0"        # Адрес, на котором будет запущен сервер
+  port: "8080"           # Порт, на котором будет запущен сервер
+
+database:
+  driver: "postgres"     # Название драйвера для базы данных (например, "postgres" для PostgreSQL)
+  dsn: "user=username password=password dbname=db sslmode=disable" # DSN (Data Source Name) для подключения к базе данных
+
+logger:
+  level: "info"          # Уровень логирования (например, "debug", "info", "warn", "error")

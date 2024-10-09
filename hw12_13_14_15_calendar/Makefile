@@ -23,12 +23,17 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/... ./pkg/...
+	go test -race -cover ./internal/... ./pkg/...
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
 
 lint: install-lint-deps
 	golangci-lint run ./...
+	go fmt ./...
+	go vet ./...
+
+migrate:
+	goose -dir ./migrations postgres "your_database_connection_string" up
 
 .PHONY: build run build-img run-img version test lint
