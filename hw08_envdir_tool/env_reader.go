@@ -26,18 +26,13 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 
-		fileInfo, err := file.Info()
-		if err != nil || !fileInfo.Mode().IsRegular() {
-			continue
+		content, err := os.ReadFile(filepath.Join(dir, file.Name()))
+		if err != nil {
+			return nil, err
 		}
 
-		content, err2 := os.ReadFile(filepath.Join(dir, file.Name()))
-		if err2 != nil {
-			return nil, err2
-		}
-
-		value := strings.TrimSpace(string(content))
-		cleanedValue := strings.SplitN(value, "\x00", 2)[0]
+		value := strings.TrimRight(string(content), "\n\t ")
+		cleanedValue := strings.ReplaceAll(value, "\x00", "")
 		env[file.Name()] = EnvValue{Value: cleanedValue, NeedRemove: len(cleanedValue) == 0}
 	}
 
