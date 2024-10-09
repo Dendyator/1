@@ -1,5 +1,15 @@
 [logger]
-level = "INFO"
+# Уровень детализации логирования, может быть: "debug", "info", "warn", "error"
+level = "debug"
 
-# TODO
-# ...
+[db]
+# Параметры подключения к базе данных
+host = "localhost"
+port = 5432
+user = "your_username"
+password = "your_password"
+dbname = "your_dbname"
+
+[server]
+# Настройки HTTP сервера
+port = 8080
