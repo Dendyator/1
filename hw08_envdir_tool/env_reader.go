@@ -26,13 +26,17 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 
-		content, err := os.ReadFile(filepath.Join(dir, file.Name()))
+		filePath := filepath.Join(dir, file.Name())
+		content, err := os.ReadFile(filePath)
 		if err != nil {
 			return nil, err
 		}
 
-		value := strings.TrimRight(string(content), "\n\t ")
-		cleanedValue := strings.ReplaceAll(value, "\x00", "")
+		lines := strings.SplitN(string(content), "\n", 2)
+		firstLine := lines[0]
+		cleanedValue := strings.TrimRight(firstLine, " \t")
+		cleanedValue = strings.ReplaceAll(cleanedValue, "\x00", "")
+
 		env[file.Name()] = EnvValue{Value: cleanedValue, NeedRemove: len(cleanedValue) == 0}
 	}
 
