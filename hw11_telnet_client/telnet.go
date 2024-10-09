@@ -42,7 +42,7 @@ func (c *telnetClient) Send() error {
 	}
 	buf := make([]byte, 1024)
 	n, err := c.in.Read(buf)
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return err
 	}
 	if err != nil {
