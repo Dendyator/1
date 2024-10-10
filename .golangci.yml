@@ -37,7 +37,7 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - copyloopvar
+    - copyloopvar 
     - depguard
     - dogsled
     - dupl
