@@ -1,6 +1,6 @@
 module github.com/Dendyator/1/hw10_program_optimization
 
-go 1.23.0
+go 1.23
 
 require (
 	github.com/mailru/easyjson v0.7.7
