@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/lib/pq" //nolint
+
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/config"  //nolint
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"  //nolint
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
@@ -29,6 +31,10 @@ func main() {
 
 	cfg := config.LoadConfig(configFile)
 	logg := logger.New(cfg.Logger.Level)
+
+	logg.Info("Using DSN: " + cfg.Database.DSN)
+
+	time.Sleep(5 * time.Second) // Например, ожидание 5 секунд
 
 	var store storage.Interface
 	if cfg.Database.Driver == "in-memory" {

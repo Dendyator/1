@@ -1,22 +1,21 @@
-version: '3.8'
-
 services:
   calendar:
     build:
-      context: ./build
+      context: ../
+      dockerfile: deployments/build/Dockerfile
     container_name: calendar_service
     volumes:
-      - ../configs:/app/configs # Монтирование конфигураций из локальной директории
+      - ../configs:/app/configs
     ports:
       - "8080:8080"
     environment:
-      - CONFIG_PATH=/app/configs/config.toml # Путь к конфигурационному файлу
+      - CONFIG_PATH=/app/configs/config.yaml
+      - DATABASE_URL=postgres://user:password@db:5432/calendar
     networks:
-      calendar_network:
-        aliases:
-          - calendar
+      - calendar_network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:latest
@@ -28,10 +27,18 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
-      calendar_network:
-        aliases:
-          - database
+      - calendar_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user" ]
+      interval: 2s
+      timeout: 3s
+      retries: 5
 
 networks:
   calendar_network:
     driver: bridge
+    name: calendar_network
+
+volumes:
+  db_data:
+    driver: local
