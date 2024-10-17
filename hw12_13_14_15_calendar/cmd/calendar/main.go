@@ -34,7 +34,7 @@ func main() {
 
 	logg.Info("Using DSN: " + cfg.Database.DSN)
 
-	time.Sleep(5 * time.Second) // Например, ожидание 5 секунд
+	time.Sleep(5 * time.Second)
 
 	var store storage.Interface
 	if cfg.Database.Driver == "in-memory" {
@@ -45,7 +45,7 @@ func main() {
 		store, err = sqlstorage.New(cfg.Database.DSN)
 		if err != nil {
 			logg.Error("Failed to initialize SQL storage: " + err.Error())
-			return // Использую return вместо os.Exit
+			return
 		}
 		logg.Info("Using SQL storage")
 	}
