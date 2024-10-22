@@ -36,7 +36,6 @@ func UnpackString(input string) (string, error) {
 		}
 	}
 	a := strings.Join(letter, "")
-	letter = nil //nolint
 	return a, nil
 }
 
