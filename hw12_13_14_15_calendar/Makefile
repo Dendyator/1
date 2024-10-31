@@ -33,6 +33,9 @@ build-img:
 run-img: run-db build-img
 	docker run -p 8080:8080 --name calendar_service --rm $(DOCKER_IMG)
 
+generate:
+	protoc -I=api --go_out=api/pb --go-grpc_out=api/pb api/*.proto
+
 version: build
 	$(BIN) version
 
@@ -51,5 +54,3 @@ migrate:
 	goose -dir ./migrations postgres "your_database_connection_string" up
 
 .PHONY: build run run-db build-img run-img version test lint wait-db
-
-

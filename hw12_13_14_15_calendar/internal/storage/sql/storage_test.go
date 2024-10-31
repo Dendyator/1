@@ -16,11 +16,8 @@ func TestCreateEvent(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
-
 	sqlxDB := sqlx.NewDb(db, "postgres")
-
 	storages := &sqlstorage.Storage{DB: sqlxDB}
-
 	event := storage.Event{
 		ID:          "1",
 		Title:       "Test Event",
@@ -32,7 +29,6 @@ func TestCreateEvent(t *testing.T) {
 	mock.ExpectExec("INSERT INTO events").
 		WithArgs(event.ID, event.Title, event.Description, event.StartTime, event.EndTime).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
 	err = storages.CreateEvent(event)
 	assert.NoError(t, err)
 }
@@ -41,11 +37,8 @@ func TestUpdateEvent(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
-
 	sqlxDB := sqlx.NewDb(db, "postgres")
-
 	storages := &sqlstorage.Storage{DB: sqlxDB}
-
 	event := storage.Event{
 		ID:          "1",
 		Title:       "Updated Event",
@@ -66,15 +59,11 @@ func TestDeleteEvent(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
-
 	sqlxDB := sqlx.NewDb(db, "postgres")
-
 	storage := &sqlstorage.Storage{DB: sqlxDB}
-
 	mock.ExpectExec("DELETE FROM events").
 		WithArgs("1").
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
 	err = storage.DeleteEvent("1")
 	assert.NoError(t, err)
 }
@@ -83,10 +72,8 @@ func TestGetEventFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
-
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	storages := &sqlstorage.Storage{DB: sqlxDB}
-
 	event := storage.Event{
 		ID:          "1",
 		Title:       "Found Event",
@@ -109,14 +96,11 @@ func TestGetEventNotFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
-
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	storages := &sqlstorage.Storage{DB: sqlxDB}
-
 	mock.ExpectQuery("SELECT id, title, description, start_time, end_time FROM events WHERE id = \\$1").
 		WithArgs("2").
 		WillReturnError(errors.New("event not found"))
-
 	_, err = storages.GetEvent("2")
 	assert.Error(t, err)
 	assert.Equal(t, "event not found", err.Error())
@@ -126,10 +110,8 @@ func TestListEvents(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
-
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	storages := &sqlstorage.Storage{DB: sqlxDB}
-
 	events := []storage.Event{
 		{
 			ID:          "1",

@@ -8,6 +8,7 @@ services:
       - ../configs:/app/configs
     ports:
       - "8080:8080"
+      - "50051:50051"
     environment:
       - CONFIG_PATH=/app/configs/config.yaml
       - DATABASE_URL=postgres://user:password@db:5432/calendar

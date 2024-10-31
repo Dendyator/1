@@ -1,73 +1,151 @@
 package internalhttp
 
 import (
-	"context"
-	"errors"
-	"io"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"  //nolint:depguard
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint:depguard
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"         //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage"        //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
 	"github.com/stretchr/testify/assert"
 )
 
-type MockApp struct{}
-
-func (m *MockApp) CreateEvent(_ storage.Event) error {
-	return nil
-}
-
-func TestServer(t *testing.T) {
-	cfg := ServerConfig{
-		Host: "localhost",
-		Port: "8080",
-	}
+func TestCreateEventHandler(t *testing.T) {
+	store := memorystorage.New()
 	logg := logger.New("info")
-	app := &MockApp{}
+	handler := createEventHandler(store, logg)
 
-	server := NewServer(cfg, logg, app)
-
-	ts := httptest.NewServer(server.httpServer.Handler)
-	defer ts.Close()
-
-	t.Run("Root Handler", func(t *testing.T) {
-		// Создаем HTTP-клиент с таймаутом
-		client := &http.Client{
-			Timeout: 5 * time.Second,
+	t.Run("successful creation", func(t *testing.T) {
+		event := storage.Event{
+			ID:    "1",
+			Title: "Test Event",
 		}
+		buf, _ := json.Marshal(event)
+		req := httptest.NewRequest(http.MethodPost, "/events", bytes.NewBuffer(buf))
+		rec := httptest.NewRecorder()
 
-		// Создаем запрос с контекстом
-		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, ts.URL, nil)
-		assert.NoError(t, err)
+		handler(rec, req)
 
-		resp, err := client.Do(req)
-		assert.NoError(t, err)
-
-		body, err := io.ReadAll(resp.Body)
-		assert.NoError(t, err)
-		resp.Body.Close()
-
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		assert.Equal(t, "Hello, World!", string(body))
+		assert.Equal(t, http.StatusCreated, rec.Code)
 	})
 
-	t.Run("Start and Stop Server", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	t.Run("duplicate event", func(t *testing.T) {
+		event := storage.Event{
+			ID:    "1",
+			Title: "Duplicate Event",
+		}
+		buf, _ := json.Marshal(event)
+		req := httptest.NewRequest(http.MethodPost, "/events", bytes.NewBuffer(buf))
+		rec := httptest.NewRecorder()
 
-		go func() {
-			err := server.Start(ctx)
-			if err != nil && !errors.Is(err, http.ErrServerClosed) {
-				t.Error(err)
-			}
-		}()
+		handler(rec, req)
 
-		time.Sleep(time.Second)
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+}
 
-		cancel()
-		time.Sleep(time.Second)
+func TestGetEventHandler(t *testing.T) {
+	store := memorystorage.New()
+	logg := logger.New("info")
+	handler := eventHandler(store, logg)
+
+	event := storage.Event{
+		ID:    "1",
+		Title: "Test Event",
+	}
+	_ = store.CreateEvent(event)
+
+	t.Run("successful get", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/events/1", nil)
+		rec := httptest.NewRecorder()
+
+		handler(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		var respEvent storage.Event
+		_ = json.NewDecoder(rec.Body).Decode(&respEvent)
+		assert.Equal(t, event, respEvent)
+	})
+
+	t.Run("event not found", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/events/2", nil)
+		rec := httptest.NewRecorder()
+
+		handler(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+}
+
+func TestUpdateEventHandler(t *testing.T) {
+	store := memorystorage.New()
+	logg := logger.New("info")
+	handler := eventHandler(store, logg)
+
+	event := storage.Event{
+		ID:    "1",
+		Title: "Test Event",
+	}
+	_ = store.CreateEvent(event)
+
+	t.Run("successful update", func(t *testing.T) {
+		updatedEvent := storage.Event{
+			ID:    "1",
+			Title: "Updated Event",
+		}
+		buf, _ := json.Marshal(updatedEvent)
+		req := httptest.NewRequest(http.MethodPut, "/events/1", bytes.NewBuffer(buf))
+		rec := httptest.NewRecorder()
+
+		handler(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("update not found", func(t *testing.T) {
+		updatedEvent := storage.Event{
+			ID:    "2",
+			Title: "New Event",
+		}
+		buf, _ := json.Marshal(updatedEvent)
+		req := httptest.NewRequest(http.MethodPut, "/events/2", bytes.NewBuffer(buf))
+		rec := httptest.NewRecorder()
+
+		handler(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+}
+
+func TestDeleteEventHandler(t *testing.T) {
+	store := memorystorage.New()
+	logg := logger.New("info")
+	handler := eventHandler(store, logg)
+
+	event := storage.Event{
+		ID:    "1",
+		Title: "Test Event",
+	}
+	_ = store.CreateEvent(event)
+
+	t.Run("successful delete", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/events/1", nil)
+		rec := httptest.NewRecorder()
+
+		handler(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+	})
+
+	t.Run("delete not found", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/events/2", nil)
+		rec := httptest.NewRecorder()
+
+		handler(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
 }

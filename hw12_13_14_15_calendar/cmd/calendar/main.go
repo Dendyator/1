@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"net"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -11,13 +12,15 @@ import (
 
 	_ "github.com/lib/pq" //nolint
 
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/config"  //nolint
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"  //nolint
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
-
+	api "github.com/Dendyator/1/hw12_13_14_15_calendar/api/pb"                            //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/config"                       //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"                       //nolint
+	internalgrpc "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/server/grpc"     //nolint
 	internalhttp "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/server/http"     //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage"                      //nolint
 	memorystorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
 	sqlstorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/sql"       //nolint
+	"google.golang.org/grpc"
 )
 
 var configFile string
@@ -55,7 +58,11 @@ func main() {
 		Port: cfg.Server.Port,
 	}
 
-	server := internalhttp.NewServer(serverCfg, logg, store)
+	httpServer := internalhttp.NewServer(serverCfg, logg, store)
+
+	grpcServer := grpc.NewServer()
+	apiServer := internalgrpc.NewGRPCServer(store, logg)
+	api.RegisterEventServiceServer(grpcServer, apiServer)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
@@ -66,13 +73,28 @@ func main() {
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(timeoutCtx); err != nil {
+		if err := httpServer.Stop(timeoutCtx); err != nil {
 			logg.Error("Failed to stop HTTP server: " + err.Error())
+		}
+
+		grpcServer.GracefulStop()
+	}()
+
+	go func() {
+		listener, err := net.Listen("tcp", ":50051") //nolint
+		if err != nil {
+			logg.Error("Failed to listen on port 50051: " + err.Error())
+			return
+		}
+		logg.Info("GRPC server is running on port 50051...")
+		if err := grpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			logg.Error("Failed to start GRPC server: " + err.Error())
+			return
 		}
 	}()
 
 	logg.Info("Calendar server is running...")
-	if err := server.Start(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := httpServer.Start(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logg.Error("Failed to start HTTP server: " + err.Error())
 		return
 	}
