@@ -18,11 +18,12 @@ wait-db:
 	done
 
 run: run-db build-img
-	@if [ "$(docker ps -q -f name=calendar_service)" ]; then \
-		docker stop calendar_service; \
-		docker rm calendar_service; \
-	fi; \
+	@$(MAKE) stop-old-container
 	docker run --network calendar_network -p 8080:8080 --name calendar_service --rm $(DOCKER_IMG)
+
+stop-old-container:
+	@docker ps -q -f name=calendar_service | xargs -r docker stop
+	@docker ps -aq -f name=calendar_service | xargs -r docker rm
 
 build-img:
 	docker build \
@@ -53,4 +54,4 @@ lint: install-lint-deps
 migrate:
 	goose -dir ./migrations postgres "your_database_connection_string" up
 
-.PHONY: build run run-db build-img run-img version test lint wait-db
+.PHONY: build run run-db build-img run-img version test lint wait-db stop-old-container
