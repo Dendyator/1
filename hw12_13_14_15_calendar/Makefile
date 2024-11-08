@@ -67,7 +67,6 @@ version: build
 	$(BIN) version
 
 test:
-	sleep 80
 	go test -race -cover ./internal/...
 
 install-lint-deps:

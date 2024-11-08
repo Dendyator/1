@@ -33,6 +33,18 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.ref, 'calendar') }}
+    services:
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_running"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Extract branch name
         run: echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
@@ -44,6 +56,12 @@ jobs:
 
       - name: Check out code
         uses: actions/checkout@v3
+
+      - name: Wait for RabbitMQ to be ready
+        run: |
+          for i in {1..30}; do 
+            nc -z localhost 5672 && break || sleep 1
+          done
 
       - name: Unit tests
         run: go test -v -count=1 -race -timeout=1m ./...
@@ -63,12 +81,24 @@ jobs:
       - name: Run bash command
         shell: bash
         run: |
-            echo $TEST_VAR
+          echo $TEST_VAR
         working-directory: ${{ env.BRANCH }}
 
   tests_by_makefile:
     runs-on: ubuntu-latest
     if: contains(github.ref, 'calendar')
+    services:
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_running"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -89,4 +119,3 @@ jobs:
       - name: make test
         run: make test
         working-directory: hw12_13_14_15_calendar
-    

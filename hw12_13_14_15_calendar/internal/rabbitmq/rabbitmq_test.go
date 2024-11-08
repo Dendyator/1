@@ -1,14 +1,25 @@
 package rabbitmq_test
 
 import (
-	"testing"
+	"time"
 
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/rabbitmq" //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/rabbitmq"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestRabbitMQConnection(t *testing.T) {
-	client, err := rabbitmq.New("amqp://guest:guest@localhost:5672/")
+	var client *rabbitmq.Client
+	var err error
+
+	for i := 0; i < 5; i++ {
+		client, err = rabbitmq.New("amqp://guest:guest@localhost:5672/")
+		if err == nil {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 
