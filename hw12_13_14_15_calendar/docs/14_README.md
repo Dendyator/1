@@ -46,3 +46,52 @@
 - Понятность и чистота кода - до 2 баллов
 
 #### Зачёт от 7 баллов
+
+За
+
+
+Использование REST API с cURL
+
+1) Добавить событие:
+
+$event = @{
+"id" = "12344";
+"title" = "New Event 6";
+"description" = "Event Description";
+"start_time" = (Get-Date).AddHours(1).ToString("u");
+"end_time" = (Get-Date).AddHours(2).ToString("u")
+}
+
+Invoke-RestMethod -Uri http://localhost:8080/events -Method POST -Body ($event | ConvertTo-Json) -ContentType "application/json"
+
+
+2) Обновить событие:
+$event = @{
+"id" = "12345";
+"title" = "Updated Event";
+"description" = "Updated Description";
+"start_time" = (Get-Date).AddHours(1).ToString("u");
+"end_time" = (Get-Date).AddHours(3).ToString("u")
+}
+
+Invoke-RestMethod -Uri http://localhost:8080/events/12345 -Method PUT -Body ($event | ConvertTo-Json) -ContentType "application/json"
+
+3) Получить событие:
+Invoke-RestMethod -Uri http://localhost:8080/events/12345 -Method GET
+
+4) Удалить событие:
+Invoke-RestMethod -Uri http://localhost:8080/events/12345 -Method DELETE
+
+5) Получить список событий:
+   Invoke-RestMethod -Uri http://localhost:8080/events -Method GET
+
+
+
+Использование gRPC
+
+grpcurl -plaintext -d '{"event": {"id": "1", "title": "Test Event", "description": "This is a test", "start_time": 1700000000, "end_time": 1700007200}}' localhost:50051 api.EventService/CreateEvent
+
+
+RabbitMQ:
+http://localhost:15672
+guest/guest

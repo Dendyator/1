@@ -16,4 +16,5 @@ type Interface interface {
 	DeleteEvent(id string) error
 	GetEvent(id string) (Event, error)
 	ListEvents() ([]Event, error)
+	DeleteOldEvents(before time.Time) error
 }

@@ -21,16 +21,23 @@ import (
 	memorystorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
 	sqlstorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/sql"       //nolint
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/calendar_config.yaml", "Path to configuration file")
 }
 
 func main() {
+	versionFlag := flag.Bool("version", false, "Display version information")
 	flag.Parse()
+
+	if *versionFlag {
+		printVersion()
+		return
+	}
 
 	cfg := config.LoadConfig(configFile)
 	logg := logger.New(cfg.Logger.Level)
@@ -63,6 +70,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	apiServer := internalgrpc.NewGRPCServer(store, logg)
 	api.RegisterEventServiceServer(grpcServer, apiServer)
+	reflection.Register(grpcServer)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()

@@ -6,9 +6,10 @@ import (
 	"log"
 	"time"
 
+	_ "github.com/jackc/pgx/v4/stdlib" //nolint
+	"github.com/jmoiron/sqlx"          //nolint
+
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
-	_ "github.com/jackc/pgx/v4/stdlib"                               //nolint
-	"github.com/jmoiron/sqlx"                                        //nolint
 )
 
 type Storage struct {
@@ -90,4 +91,10 @@ func (s *Storage) ListEvents() ([]storage.Event, error) {
 	query := `SELECT id, title, description, start_time, end_time FROM events`
 	err := s.DB.Select(&events, query)
 	return events, err
+}
+
+func (s *Storage) DeleteOldEvents(before time.Time) error {
+	query := `DELETE FROM events WHERE end_time < $1`
+	_, err := s.DB.Exec(query, before)
+	return err
 }

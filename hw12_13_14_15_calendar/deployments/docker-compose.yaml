@@ -10,12 +10,14 @@ services:
       - "8080:8080"
       - "50051:50051"
     environment:
-      - CONFIG_PATH=/app/configs/config.yaml
+      - CONFIG_PATH=/app/configs/calendar_config.yaml
       - DATABASE_URL=postgres://user:password@db:5432/calendar
     networks:
       - calendar_network
     depends_on:
       db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   db:
@@ -34,6 +36,44 @@ services:
       interval: 2s
       timeout: 3s
       retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - calendar_network
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl status"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  scheduler_service:
+    build:
+      context: ../
+      dockerfile: deployments/build/Dockerfile
+    container_name: scheduler_service
+    volumes:
+      - ../configs:/app/configs
+    networks:
+      - calendar_network
+    depends_on:
+      - rabbitmq
+
+  sender_service:
+    build:
+      context: ../
+      dockerfile: deployments/build/Dockerfile
+    container_name: sender_service
+    volumes:
+      - ../configs:/app/configs
+    networks:
+      - calendar_network
+    depends_on:
+      - rabbitmq
 
 networks:
   calendar_network:

@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"         //nolint
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage"        //nolint
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"                       //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage"                      //nolint
+	memorystorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,7 +50,7 @@ func TestCreateEventHandler(t *testing.T) {
 func TestGetEventHandler(t *testing.T) {
 	store := memorystorage.New()
 	logg := logger.New("info")
-	handler := eventHandler(store, logg)
+	handler := getEventHandler(store, logg) // updated to getEventHandler
 
 	event := storage.Event{
 		ID:    "1",
@@ -83,7 +83,7 @@ func TestGetEventHandler(t *testing.T) {
 func TestUpdateEventHandler(t *testing.T) {
 	store := memorystorage.New()
 	logg := logger.New("info")
-	handler := eventHandler(store, logg)
+	handler := updateEventHandler(store, logg) // updated to updateEventHandler
 
 	event := storage.Event{
 		ID:    "1",
@@ -123,7 +123,7 @@ func TestUpdateEventHandler(t *testing.T) {
 func TestDeleteEventHandler(t *testing.T) {
 	store := memorystorage.New()
 	logg := logger.New("info")
-	handler := eventHandler(store, logg)
+	handler := deleteEventHandler(store, logg) // updated to deleteEventHandler
 
 	event := storage.Event{
 		ID:    "1",

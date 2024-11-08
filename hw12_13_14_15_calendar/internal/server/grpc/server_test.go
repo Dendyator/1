@@ -17,6 +17,11 @@ type MockStorage struct {
 	mock.Mock
 }
 
+func (m *MockStorage) DeleteOldEvents(before time.Time) error {
+	args := m.Called(before)
+	return args.Error(0)
+}
+
 func (m *MockStorage) CreateEvent(event storage.Event) error {
 	args := m.Called(event)
 	return args.Error(0)

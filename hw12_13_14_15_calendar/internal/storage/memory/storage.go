@@ -3,6 +3,7 @@ package memorystorage
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint:depguard
 )
@@ -74,4 +75,17 @@ func (s *Storage) ListEvents() ([]storage.Event, error) {
 		events = append(events, event)
 	}
 	return events, nil
+}
+
+func (s *Storage) DeleteOldEvents(before time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for id, event := range s.events {
+		if event.EndTime.Before(before) {
+			delete(s.events, id)
+		}
+	}
+
+	return nil
 }

@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"os"
+
 	"github.com/sirupsen/logrus" //nolint:depguard
 )
 
@@ -16,6 +18,8 @@ func New(level string) *Logger {
 		lvl = logrus.InfoLevel
 	}
 	logger.SetLevel(lvl)
+
+	logger.SetOutput(os.Stdout)
 
 	return &Logger{logger}
 }
