@@ -63,6 +63,18 @@ jobs:
             nc -z localhost 5672 && break || sleep 1
           done
 
+      - name: Check RabbitMQ connectivity
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 5672; then
+              echo "RabbitMQ is ready"
+              break
+            else
+              echo "Waiting for RabbitMQ..."
+              sleep 1
+            fi
+          done
+
       - name: Unit tests
         run: go test -v -count=1 -race -timeout=1m ./...
         working-directory: ${{ env.BRANCH }}
