@@ -6,11 +6,12 @@ services:
     container_name: calendar_service
     volumes:
       - ../configs:/app/configs
+      - ../migrations:/migrations
     ports:
       - "8080:8080"
       - "50051:50051"
     environment:
-      - CONFIG_PATH=/app/configs/calendar_config.yaml
+      - CONFIG_PATH=/app/configs/config.yaml
       - DATABASE_URL=postgres://user:password@db:5432/calendar
     networks:
       - calendar_network
@@ -32,9 +33,9 @@ services:
     networks:
       - calendar_network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user" ]
-      interval: 2s
-      timeout: 3s
+      test: [ "CMD-SHELL", "pg_isready -U user -d calendar" ]
+      interval: 5s
+      timeout: 10s
       retries: 5
 
   rabbitmq:
@@ -52,6 +53,7 @@ services:
       retries: 3
 
   scheduler_service:
+    image: debian:bullseye
     build:
       context: ../
       dockerfile: deployments/build/Dockerfile

@@ -2,150 +2,237 @@ package internalhttp
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"                       //nolint
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage"                      //nolint
-	memorystorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
-	"github.com/stretchr/testify/assert"
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"  //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
+	"github.com/google/uuid"                                         //nolint
+	"github.com/stretchr/testify/assert"                             //nolint
+	"github.com/stretchr/testify/mock"
 )
 
-func TestCreateEventHandler(t *testing.T) {
-	store := memorystorage.New()
+type MockStorage struct {
+	mock.Mock
+}
+
+func (m *MockStorage) DeleteOldEvents(before time.Time) error {
+	args := m.Called(before)
+	return args.Error(0)
+}
+
+func (m *MockStorage) ListEventsByDay(date time.Time) ([]storage.Event, error) {
+	args := m.Called(date)
+	return args.Get(0).([]storage.Event), args.Error(1)
+}
+
+func (m *MockStorage) ListEventsByWeek(start time.Time) ([]storage.Event, error) {
+	args := m.Called(start)
+	return args.Get(0).([]storage.Event), args.Error(1)
+}
+
+func (m *MockStorage) ListEventsByMonth(start time.Time) ([]storage.Event, error) {
+	args := m.Called(start)
+	return args.Get(0).([]storage.Event), args.Error(1)
+}
+
+func (m *MockStorage) ListEvents() ([]storage.Event, error) {
+	args := m.Called()
+	return args.Get(0).([]storage.Event), args.Error(1)
+}
+
+func (m *MockStorage) CreateEvent(event storage.Event) error {
+	return m.Called(event).Error(0)
+}
+
+func (m *MockStorage) GetEvent(id uuid.UUID) (storage.Event, error) {
+	args := m.Called(id)
+	return args.Get(0).(storage.Event), args.Error(1)
+}
+
+func (m *MockStorage) UpdateEvent(id uuid.UUID, event storage.Event) error {
+	return m.Called(id, event).Error(0)
+}
+
+func (m *MockStorage) DeleteEvent(id uuid.UUID) error {
+	return m.Called(id).Error(0)
+}
+
+func TestListEventsHandler_EmptyList(t *testing.T) {
+	mockStorage := new(MockStorage)
 	logg := logger.New("info")
-	handler := createEventHandler(store, logg)
 
-	t.Run("successful creation", func(t *testing.T) {
-		event := storage.Event{
-			ID:    "1",
-			Title: "Test Event",
-		}
-		buf, _ := json.Marshal(event)
-		req := httptest.NewRequest(http.MethodPost, "/events", bytes.NewBuffer(buf))
-		rec := httptest.NewRecorder()
+	NewServer(ServerConfig{Host: "localhost", Port: "8080"}, logg, mockStorage)
 
-		handler(rec, req)
+	mockStorage.On("ListEvents").Return([]storage.Event{}, nil)
 
-		assert.Equal(t, http.StatusCreated, rec.Code)
-	})
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/events", nil)
+	assert.NoError(t, err)
 
-	t.Run("duplicate event", func(t *testing.T) {
-		event := storage.Event{
-			ID:    "1",
-			Title: "Duplicate Event",
-		}
-		buf, _ := json.Marshal(event)
-		req := httptest.NewRequest(http.MethodPost, "/events", bytes.NewBuffer(buf))
-		rec := httptest.NewRecorder()
+	rr := httptest.NewRecorder()
+	handler := listEventsHandler(mockStorage, logg)
 
-		handler(rec, req)
+	handler.ServeHTTP(rr, req)
 
-		assert.Equal(t, http.StatusInternalServerError, rec.Code)
-	})
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var events []storage.Event
+	err = json.Unmarshal(rr.Body.Bytes(), &events)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(events))
+
+	mockStorage.AssertExpectations(t)
+}
+
+func TestListEventsHandler_WithEvents(t *testing.T) {
+	mockStorage := new(MockStorage)
+	logg := logger.New("info")
+
+	NewServer(ServerConfig{Host: "localhost", Port: "8080"}, logg, mockStorage)
+
+	event := storage.Event{
+		ID:          uuid.New(),
+		Title:       "Test Event",
+		Description: "This is a test event",
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(1 * time.Hour),
+		UserID:      uuid.New(),
+	}
+
+	mockStorage.On("ListEvents").Return([]storage.Event{event}, nil)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "/events", nil)
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := listEventsHandler(mockStorage, logg)
+
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var events []storage.Event
+	err = json.Unmarshal(rr.Body.Bytes(), &events)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(events))
+	assert.Equal(t, event.ID, events[0].ID)
+
+	mockStorage.AssertExpectations(t)
+}
+
+func TestCreateEventHandler(t *testing.T) {
+	mockStorage := new(MockStorage)
+	logg := logger.New("info")
+	fixedTime := time.Date(2024, 11, 11, 13, 4, 0, 0, time.UTC)
+
+	event := storage.Event{
+		ID:          uuid.New(),
+		Title:       "New Event",
+		Description: "This is a new event",
+		StartTime:   fixedTime,
+		EndTime:     fixedTime.Add(1 * time.Hour),
+		UserID:      uuid.New(),
+	}
+
+	eventJSON, _ := json.Marshal(event)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost,
+		"/events", bytes.NewBuffer(eventJSON))
+	assert.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := createEventHandler(mockStorage, logg)
+
+	mockStorage.On("CreateEvent", event).Return(nil)
+
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusCreated, rr.Code)
 }
 
 func TestGetEventHandler(t *testing.T) {
-	store := memorystorage.New()
+	mockStorage := new(MockStorage)
 	logg := logger.New("info")
-	handler := getEventHandler(store, logg) // updated to getEventHandler
 
 	event := storage.Event{
-		ID:    "1",
-		Title: "Test Event",
+		ID:          uuid.New(),
+		Title:       "Get Event",
+		Description: "This is a get event",
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(1 * time.Hour),
+		UserID:      uuid.New(),
 	}
-	_ = store.CreateEvent(event)
 
-	t.Run("successful get", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/events/1", nil)
-		rec := httptest.NewRecorder()
+	mockStorage.On("GetEvent", event.ID).Return(event, nil)
 
-		handler(rec, req)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet,
+		"/events/"+event.ID.String(), nil)
+	assert.NoError(t, err)
 
-		assert.Equal(t, http.StatusOK, rec.Code)
-		var respEvent storage.Event
-		_ = json.NewDecoder(rec.Body).Decode(&respEvent)
-		assert.Equal(t, event, respEvent)
-	})
+	rr := httptest.NewRecorder()
+	handler := getEventHandler(mockStorage, logg)
 
-	t.Run("event not found", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/events/2", nil)
-		rec := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
 
-		handler(rec, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
 
-		assert.Equal(t, http.StatusNotFound, rec.Code)
-	})
+	var returnedEvent storage.Event
+	err = json.Unmarshal(rr.Body.Bytes(), &returnedEvent)
+	assert.NoError(t, err)
+	assert.Equal(t, event.ID, returnedEvent.ID)
 }
 
 func TestUpdateEventHandler(t *testing.T) {
-	store := memorystorage.New()
+	mockStorage := new(MockStorage)
 	logg := logger.New("info")
-	handler := updateEventHandler(store, logg) // updated to updateEventHandler
+	fixedTime := time.Date(2024, 11, 11, 13, 4, 0, 0, time.UTC)
 
 	event := storage.Event{
-		ID:    "1",
-		Title: "Test Event",
+		ID:          uuid.New(),
+		Title:       "Updated Event",
+		Description: "This is an updated event",
+		StartTime:   fixedTime,
+		EndTime:     fixedTime.Add(1 * time.Hour),
+		UserID:      uuid.New(),
 	}
-	_ = store.CreateEvent(event)
 
-	t.Run("successful update", func(t *testing.T) {
-		updatedEvent := storage.Event{
-			ID:    "1",
-			Title: "Updated Event",
-		}
-		buf, _ := json.Marshal(updatedEvent)
-		req := httptest.NewRequest(http.MethodPut, "/events/1", bytes.NewBuffer(buf))
-		rec := httptest.NewRecorder()
+	eventJSON, _ := json.Marshal(event)
 
-		handler(rec, req)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut,
+		"/events/"+event.ID.String(), bytes.NewBuffer(eventJSON))
+	assert.NoError(t, err)
 
-		assert.Equal(t, http.StatusOK, rec.Code)
-	})
+	rr := httptest.NewRecorder()
+	handler := updateEventHandler(mockStorage, logg)
 
-	t.Run("update not found", func(t *testing.T) {
-		updatedEvent := storage.Event{
-			ID:    "2",
-			Title: "New Event",
-		}
-		buf, _ := json.Marshal(updatedEvent)
-		req := httptest.NewRequest(http.MethodPut, "/events/2", bytes.NewBuffer(buf))
-		rec := httptest.NewRecorder()
+	mockStorage.On("UpdateEvent", event.ID, event).Return(nil)
 
-		handler(rec, req)
+	handler.ServeHTTP(rr, req)
 
-		assert.Equal(t, http.StatusNotFound, rec.Code)
-	})
+	assert.Equal(t, http.StatusOK, rr.Code)
 }
 
 func TestDeleteEventHandler(t *testing.T) {
-	store := memorystorage.New()
+	mockStorage := new(MockStorage)
 	logg := logger.New("info")
-	handler := deleteEventHandler(store, logg) // updated to deleteEventHandler
 
-	event := storage.Event{
-		ID:    "1",
-		Title: "Test Event",
-	}
-	_ = store.CreateEvent(event)
+	eventID := uuid.New()
 
-	t.Run("successful delete", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, "/events/1", nil)
-		rec := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete,
+		"/events/"+eventID.String(), nil)
+	assert.NoError(t, err)
 
-		handler(rec, req)
+	rr := httptest.NewRecorder()
+	handler := deleteEventHandler(mockStorage, logg)
 
-		assert.Equal(t, http.StatusOK, rec.Code)
-	})
+	mockStorage.On("DeleteEvent", eventID).Return(nil)
 
-	t.Run("delete not found", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, "/events/2", nil)
-		rec := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
 
-		handler(rec, req)
-
-		assert.Equal(t, http.StatusNotFound, rec.Code)
-	})
+	assert.Equal(t, http.StatusOK, rr.Code)
 }

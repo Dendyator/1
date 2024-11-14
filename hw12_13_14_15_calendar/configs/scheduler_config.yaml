@@ -9,4 +9,4 @@ rabbitmq:
   dsn: "amqp://guest:guest@rabbitmq:5672/"
 
 scheduler:
-  interval: "2m"
+  interval: "1h"

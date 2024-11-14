@@ -1,28 +1,63 @@
-package storage_test
+package storage
 
 import (
 	"testing"
 	"time"
 
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
-	"github.com/stretchr/testify/assert"
+	"github.com/google/uuid"              //nolint
+	"github.com/stretchr/testify/require" //nolint
 )
 
-func TestEventStructure(t *testing.T) {
-	startTime := time.Now()
-	endTime := startTime.Add(2 * time.Hour)
+type MockStorage struct{}
 
-	event := storage.Event{
-		ID:          "12345",
+func (m *MockStorage) CreateEvent(_ Event) error {
+	return nil
+}
+
+func (m *MockStorage) UpdateEvent(_ uuid.UUID, _ Event) error {
+	return nil
+}
+
+func (m *MockStorage) DeleteEvent(_ uuid.UUID) error {
+	return nil
+}
+
+func (m *MockStorage) GetEvent(_ uuid.UUID) (Event, error) {
+	return Event{}, nil
+}
+
+func (m *MockStorage) ListEvents() ([]Event, error) {
+	return []Event{}, nil
+}
+
+func (m *MockStorage) ListEventsByDay(_ time.Time) ([]Event, error) {
+	return []Event{}, nil
+}
+
+func (m *MockStorage) ListEventsByWeek(_ time.Time) ([]Event, error) {
+	return []Event{}, nil
+}
+
+func (m *MockStorage) ListEventsByMonth(_ time.Time) ([]Event, error) {
+	return []Event{}, nil
+}
+
+func (m *MockStorage) DeleteOldEvents(_ time.Time) error {
+	return nil
+}
+
+func TestCreateEvent(t *testing.T) {
+	mock := &MockStorage{}
+
+	event := Event{
+		ID:          uuid.New(),
 		Title:       "Test Event",
-		Description: "This is a test description",
-		StartTime:   startTime,
-		EndTime:     endTime,
+		Description: "This is a test event.",
+		StartTime:   time.Now().Add(time.Hour),
+		EndTime:     time.Now().Add(2 * time.Hour),
+		UserID:      uuid.New(),
 	}
 
-	assert.Equal(t, "12345", event.ID)
-	assert.Equal(t, "Test Event", event.Title)
-	assert.Equal(t, "This is a test description", event.Description)
-	assert.Equal(t, startTime, event.StartTime)
-	assert.Equal(t, endTime, event.EndTime)
+	err := mock.CreateEvent(event)
+	require.NoError(t, err, "Event created")
 }

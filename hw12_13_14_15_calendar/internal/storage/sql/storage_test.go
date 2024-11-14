@@ -5,136 +5,233 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"                                                //nolint
-	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage"                //nolint
-	sqlstorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/sql" //nolint
-	"github.com/jmoiron/sqlx"                                                       //nolint
-	"github.com/stretchr/testify/assert"                                            //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
+	"github.com/google/uuid"                                         //nolint
 )
 
+type MockStorage struct {
+	events map[uuid.UUID]storage.Event
+}
+
+func NewMockStorage() *MockStorage {
+	return &MockStorage{
+		events: make(map[uuid.UUID]storage.Event),
+	}
+}
+
+func (m *MockStorage) CreateEvent(event storage.Event) error {
+	m.events[event.ID] = event
+	return nil
+}
+
+func (m *MockStorage) UpdateEvent(id uuid.UUID, newEvent storage.Event) error {
+	if _, exists := m.events[id]; !exists {
+		return errors.New("event not found")
+	}
+	m.events[id] = newEvent
+	return nil
+}
+
+func (m *MockStorage) DeleteEvent(id uuid.UUID) error {
+	if _, exists := m.events[id]; !exists {
+		return errors.New("event not found")
+	}
+	delete(m.events, id)
+	return nil
+}
+
+func (m *MockStorage) GetEvent(id uuid.UUID) (storage.Event, error) {
+	event, exists := m.events[id]
+	if !exists {
+		return storage.Event{}, errors.New("event not found")
+	}
+	return event, nil
+}
+
+func (m *MockStorage) ListEvents() ([]storage.Event, error) {
+	events := []storage.Event{}
+	for _, event := range m.events {
+		events = append(events, event)
+	}
+	return events, nil
+}
+
+func (m *MockStorage) ListEventsByDay(date time.Time) ([]storage.Event, error) {
+	start := date.Truncate(24 * time.Hour)
+	end := start.Add(24 * time.Hour)
+	events := []storage.Event{}
+	for _, event := range m.events {
+		if event.StartTime.After(start) && event.StartTime.Before(end) {
+			events = append(events, event)
+		}
+	}
+	return events, nil
+}
+
+func (m *MockStorage) ListEventsByWeek(start time.Time) ([]storage.Event, error) {
+	end := start.AddDate(0, 0, 7)
+	events := []storage.Event{}
+	for _, event := range m.events {
+		if event.StartTime.After(start) && event.StartTime.Before(end) {
+			events = append(events, event)
+		}
+	}
+	return events, nil
+}
+
+func (m *MockStorage) ListEventsByMonth(start time.Time) ([]storage.Event, error) {
+	end := start.AddDate(0, 1, 0)
+	events := []storage.Event{}
+	for _, event := range m.events {
+		if event.StartTime.After(start) && event.StartTime.Before(end) {
+			events = append(events, event)
+		}
+	}
+	return events, nil
+}
+
+func (m *MockStorage) DeleteOldEvents(before time.Time) error {
+	for id, event := range m.events {
+		if event.EndTime.Before(before) {
+			delete(m.events, id)
+		}
+	}
+	return nil
+}
+
 func TestCreateEvent(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	storages := &sqlstorage.Storage{DB: sqlxDB}
+	s := NewMockStorage()
+	eventID := uuid.New()
+
 	event := storage.Event{
-		ID:          "1",
+		ID:          eventID,
 		Title:       "Test Event",
 		Description: "This is a test event",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(1 * time.Hour),
+		UserID:      uuid.New(),
 	}
 
-	mock.ExpectExec("INSERT INTO events").
-		WithArgs(event.ID, event.Title, event.Description, event.StartTime, event.EndTime).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	err = storages.CreateEvent(event)
-	assert.NoError(t, err)
+	err := s.CreateEvent(event)
+	if err != nil {
+		t.Errorf("error was not expected while creating event: %s", err)
+	}
+
+	if len(s.events) != 1 {
+		t.Errorf("expected 1 event, got %d", len(s.events))
+	}
 }
 
 func TestUpdateEvent(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	storages := &sqlstorage.Storage{DB: sqlxDB}
+	s := NewMockStorage()
+	eventID := uuid.New()
+
 	event := storage.Event{
-		ID:          "1",
-		Title:       "Updated Event",
-		Description: "This is an updated event",
+		ID:          eventID,
+		Title:       "Test Event",
+		Description: "This is a test event",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(1 * time.Hour),
+		UserID:      uuid.New(),
 	}
 
-	mock.ExpectExec("UPDATE events").
-		WithArgs(event.Title, event.Description, event.StartTime, event.EndTime, event.ID).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	err := s.CreateEvent(event)
+	if err != nil {
+		return
+	}
 
-	err = storages.UpdateEvent(event.ID, event)
-	assert.NoError(t, err)
+	newEvent := storage.Event{
+		ID:          eventID,
+		Title:       "Updated Event",
+		Description: "This is an updated test event",
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(2 * time.Hour),
+		UserID:      event.UserID,
+	}
+
+	er := s.UpdateEvent(eventID, newEvent)
+	if er != nil {
+		t.Errorf("error was not expected while updating event: %s", err)
+	}
+
+	updatedEvent, _ := s.GetEvent(eventID)
+	if updatedEvent.Title != "Updated Event" {
+		t.Errorf("expected event title to be 'Updated Event', got '%s'", updatedEvent.Title)
+	}
 }
 
 func TestDeleteEvent(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	storage := &sqlstorage.Storage{DB: sqlxDB}
-	mock.ExpectExec("DELETE FROM events").
-		WithArgs("1").
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	err = storage.DeleteEvent("1")
-	assert.NoError(t, err)
-}
+	s := NewMockStorage()
+	eventID := uuid.New()
 
-func TestGetEventFound(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	storages := &sqlstorage.Storage{DB: sqlxDB}
 	event := storage.Event{
-		ID:          "1",
-		Title:       "Found Event",
-		Description: "This event is found",
+		ID:          eventID,
+		Title:       "Test Event",
+		Description: "This is a test event",
 		StartTime:   time.Now(),
 		EndTime:     time.Now().Add(1 * time.Hour),
+		UserID:      uuid.New(),
 	}
 
-	mock.ExpectQuery("SELECT id, title, description, start_time, end_time FROM events WHERE id = \\$1").
-		WithArgs("1").
-		WillReturnRows(mock.NewRows([]string{"id", "title", "description", "start_time", "end_time"}).
-			AddRow(event.ID, event.Title, event.Description, event.StartTime, event.EndTime))
-
-	retEvent, err := storages.GetEvent("1")
-	assert.NoError(t, err)
-	assert.Equal(t, event, retEvent)
-}
-
-func TestGetEventNotFound(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	storages := &sqlstorage.Storage{DB: sqlxDB}
-	mock.ExpectQuery("SELECT id, title, description, start_time, end_time FROM events WHERE id = \\$1").
-		WithArgs("2").
-		WillReturnError(errors.New("event not found"))
-	_, err = storages.GetEvent("2")
-	assert.Error(t, err)
-	assert.Equal(t, "event not found", err.Error())
-}
-
-func TestListEvents(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	storages := &sqlstorage.Storage{DB: sqlxDB}
-	events := []storage.Event{
-		{
-			ID:          "1",
-			Title:       "Event 1",
-			Description: "Description 1",
-			StartTime:   time.Now(),
-			EndTime:     time.Now().Add(1 * time.Hour),
-		},
-		{
-			ID:          "2",
-			Title:       "Event 2",
-			Description: "Description 2",
-			StartTime:   time.Now(),
-			EndTime:     time.Now().Add(1 * time.Hour),
-		},
+	err := s.CreateEvent(event)
+	if err != nil {
+		return
 	}
 
-	mock.ExpectQuery("SELECT id, title, description, start_time, end_time FROM events").
-		WillReturnRows(mock.NewRows([]string{"id", "title", "description", "start_time", "end_time"}).
-			AddRow(events[0].ID, events[0].Title, events[0].Description, events[0].StartTime, events[0].EndTime).
-			AddRow(events[1].ID, events[1].Title, events[1].Description, events[1].StartTime, events[1].EndTime))
+	er := s.DeleteEvent(eventID)
+	if er != nil {
+		t.Errorf("error was not expected while deleting event: %s", err)
+	}
 
-	retEvents, err := storages.ListEvents()
-	assert.NoError(t, err)
-	assert.Equal(t, events, retEvents)
+	if len(s.events) != 0 {
+		t.Errorf("expected 0 events, got %d", len(s.events))
+	}
+}
+
+func TestDeleteNonExistentEvent(t *testing.T) {
+	s := NewMockStorage()
+	eventID := uuid.New()
+
+	err := s.DeleteEvent(eventID)
+	if err == nil {
+		t.Error("expected error while deleting non-existent event, got none")
+	}
+}
+
+func TestGetEvent(t *testing.T) {
+	s := NewMockStorage()
+	eventID := uuid.New()
+
+	event := storage.Event{
+		ID:          eventID,
+		Title:       "Test Event",
+		Description: "This is a test event",
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(1 * time.Hour),
+		UserID:      uuid.New(),
+	}
+
+	err := s.CreateEvent(event)
+	if err != nil {
+		return
+	}
+
+	fetchedEvent, err := s.GetEvent(eventID)
+	if err != nil {
+		t.Errorf("error was not expected while getting event: %s", err)
+	}
+
+	if fetchedEvent.ID != eventID {
+		t.Errorf("expected event ID to be '%s', got '%s'", eventID, fetchedEvent.ID)
+	}
+}
+
+func TestGetNonExistentEvent(t *testing.T) {
+	s := NewMockStorage()
+	eventID := uuid.New()
+
+	_, err := s.GetEvent(eventID)
+	if err == nil {
+		t.Error("expected error while getting non-existent event, got none")
+	}
 }

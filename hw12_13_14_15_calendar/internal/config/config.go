@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Server    ServerConfig
+	GRPC      GRPCConfig
 	Logger    LoggerConfig
 	Database  DatabaseConfig
 	RabbitMQ  RabbitMQConfig
@@ -17,6 +18,11 @@ type Config struct {
 }
 
 type ServerConfig struct {
+	Host string
+	Port string
+}
+
+type GRPCConfig struct {
 	Host string
 	Port string
 }

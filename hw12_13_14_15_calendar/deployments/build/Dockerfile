@@ -52,6 +52,7 @@ COPY --from=build /opt/calendar/calendar-app /opt/calendar/calendar-app
 COPY --from=build /opt/calendar/calendar-scheduler-app /opt/calendar/calendar-scheduler-app
 COPY --from=build /opt/calendar/calendar-sender-app /opt/calendar/calendar-sender-app
 COPY --from=build /go/bin/grpcurl /usr/local/bin/grpcurl
+COPY --from=build /go/bin/goose /usr/local/bin/goose
 
 ENV CONFIG_FILE=/app/configs/calendar_config.yaml
 COPY configs/calendar_config.yaml ${CONFIG_FILE}

@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux" //nolint
-
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"  //nolint
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
+	"github.com/google/uuid"                                         //nolint
+	"github.com/gorilla/mux"                                         //nolint
 )
 
 type Server struct {
@@ -70,7 +70,8 @@ func listEventsHandler(store storage.Interface, logg *logger.Logger) http.Handle
 
 		if len(events) == 0 {
 			logg.Info("No events found")
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("[]"))
 			return
 		}
 
@@ -106,7 +107,11 @@ func getEventHandler(store storage.Interface, logg *logger.Logger) http.HandlerF
 	return func(w http.ResponseWriter, r *http.Request) {
 		logg.Infof("Handling GET request for a single event")
 		id := r.URL.Path[len("/events/"):]
-		event, err := store.GetEvent(id)
+		parse, err := uuid.Parse(id)
+		if err != nil {
+			return
+		}
+		event, err := store.GetEvent(parse)
 		if err != nil {
 			logg.Errorf("Failed to get event: %v", err)
 			http.Error(w, "Event not found", http.StatusNotFound)
@@ -121,13 +126,17 @@ func updateEventHandler(store storage.Interface, logg *logger.Logger) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		logg.Infof("Handling PUT request")
 		id := r.URL.Path[len("/events/"):]
+		parse, err := uuid.Parse(id)
+		if err != nil {
+			return
+		}
 		var event storage.Event
 		if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
 			logg.Errorf("Failed to decode event: %v", err)
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
-		if err := store.UpdateEvent(id, event); err != nil {
+		if err := store.UpdateEvent(parse, event); err != nil {
 			logg.Errorf("Failed to update event: %v", err)
 			http.Error(w, "Event not found", http.StatusNotFound)
 			return
@@ -141,7 +150,11 @@ func deleteEventHandler(store storage.Interface, logg *logger.Logger) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		logg.Infof("Handling DELETE request")
 		id := r.URL.Path[len("/events/"):]
-		if err := store.DeleteEvent(id); err != nil {
+		parse, err := uuid.Parse(id)
+		if err != nil {
+			return
+		}
+		if err := store.DeleteEvent(parse); err != nil {
 			logg.Errorf("Failed to delete event: %v", err)
 			http.Error(w, "Event not found", http.StatusNotFound)
 			return

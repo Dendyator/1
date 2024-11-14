@@ -47,18 +47,20 @@ run-sender:
 
 
 run: run-db wait-db run-rabbitmq wait-rabbitmq stop-old-container build-img
-	@if [ "$(docker ps -q -f name=calendar_service)" ]; then \
+	@trap 'docker stop calendar_service' SIGINT; \
+	if [ "$(docker ps -q -f name=calendar_service)" ]; then \
 		docker stop calendar_service; \
 		docker rm calendar_service; \
 	fi; \
-	docker run --network calendar_network -p 8080:8080 --name calendar_service --rm $(DOCKER_IMG)
+	docker run --network calendar_network -p 8080:8080 -p 50051:50051 --name calendar_service --rm $(DOCKER_IMG)
+
 
 stop-old-container:
 	@docker ps -q -f name=calendar_service | xargs -r docker stop
 	@docker ps -aq -f name=calendar_service | xargs -r docker rm
 
 run-img: run-db build-img
-	docker run -p 8080:8080 --name calendar_service --rm $(DOCKER_IMG)
+	docker run -p 8080:8080 -p 50051:50051 --name calendar_service --rm $(DOCKER_IMG)
 
 generate:
 	protoc -I=api --go_out=api/pb --go-grpc_out=api/pb api/*.proto
@@ -78,6 +80,6 @@ lint: install-lint-deps
 	go vet ./...
 
 migrate:
-	goose -dir ./migrations postgres "$(DB_DSN)" up
+	docker exec -it calendar_service goose -dir /migrations postgres "postgres://user:password@db:5432/calendar?sslmode=disable" up
 
 .PHONY: build build-scheduler build-sender build-img run run-db run
