@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os/signal"
 	"syscall"
-	"time"
 
 	api "github.com/Dendyator/1/hw12_13_14_15_calendar/api/pb"                            //nolint
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/config"                       //nolint
@@ -43,8 +42,6 @@ func main() {
 	logg := logger.New(cfg.Logger.Level)
 
 	logg.Info("Using DSN: " + cfg.Database.DSN)
-
-	time.Sleep(5 * time.Second)
 
 	var store storage.Interface
 	if cfg.Database.Driver == "in-memory" {

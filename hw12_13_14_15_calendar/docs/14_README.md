@@ -4,6 +4,9 @@
 
 2) make run
 
+если подглючивает бд необходимо запустить из корня проекта команду
+docker-compose -f deployments/docker-compose.yaml down --volumes --remove-orphans
+
 3) после сборки применить миграции командой
 docker exec -it calendar_service goose -dir /migrations postgres "postgres://user:password@db:5432/calendar?sslmode=disable" up
 
