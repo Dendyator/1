@@ -1,17 +1,21 @@
 сборка 
 
-1) make build
+1) make up
 
-2) make run
+2) make down
 
-3) после сборки применить миграции командой
-docker exec -it calendar_service goose -dir /migrations postgres "postgres://user:password@db:5432/calendar?sslmode=disable" up
+3) миграции применяются автоматически.
+Удалить базу ранее созданных событий -  docker volume rm deployments_db_data
 
-4) ввести события в терминале (команды представлены ниже)
+Интеграционные тесты запускаются командой make integration-tests
+1) добавление события и выведение ошибки о попытке создания дублирующего события
+2) получение листинга событий на день/неделю/месяц (тест сам создает три события, их же и выведет. Если создать другие
+события с нужными характеристиками ранее, то выведет и их)
+3) отправка уведомлений
 
-5) make run-scheduler
+После проведения успешных тестов окружение останавливается автоматически и выводится строка
+Integration tests exited with code: 0
 
-6) make run-sender
 
 RabbitMQ:
 http://localhost:15672
@@ -24,10 +28,10 @@ guest/guest
 1. Создание события
 grpcurl -plaintext -d '{
 "event": {
-"title": "Название события",
-"description": "Описание события",
-"startTime": 1731616200,
-"endTime": 1731618000,
+"title": "Название события 30",
+"description": "Описание события 30",
+"startTime": 1734006600,
+"endTime": 1734010200,
 "userId": "e9b1f4b2-dc3e-4ea0-a8f3-1234567890ab"
 }
 }' localhost:50051 api.EventService/CreateEvent
@@ -60,7 +64,7 @@ grpcurl -plaintext -d '{
 
 6. Список событий за день
    grpcurl -plaintext -d '{
-   "date": 1609459200  // Время в формате Unix для конкретного дня
+   "date": 1731628800
    }' localhost:50051 api.EventService/ListEventsByDay
 
 7. Список событий за неделю

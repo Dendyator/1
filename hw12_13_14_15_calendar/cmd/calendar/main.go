@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os/signal"
 	"syscall"
-	"time"
 
 	api "github.com/Dendyator/1/hw12_13_14_15_calendar/api/pb"                            //nolint
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/config"                       //nolint
@@ -20,7 +19,7 @@ import (
 	sqlstorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/sql"       //nolint
 	_ "github.com/jackc/pgx/v4/stdlib"                                                    //nolint
 	_ "github.com/lib/pq"                                                                 //nolint
-	"google.golang.org/grpc"
+	"google.golang.org/grpc"                                                              //nolint
 	"google.golang.org/grpc/reflection"
 )
 
@@ -43,8 +42,6 @@ func main() {
 	logg := logger.New(cfg.Logger.Level)
 
 	logg.Info("Using DSN: " + cfg.Database.DSN)
-
-	time.Sleep(5 * time.Second)
 
 	var store storage.Interface
 	if cfg.Database.Driver == "in-memory" {

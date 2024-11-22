@@ -8,7 +8,7 @@ import (
 const layout = "2006-01-02T15:04:05"
 
 func main() {
-	timeString := "2024-11-14T20:30:00"
+	timeString := "2024-12-12T13:30:00"
 
 	t, err := time.Parse(layout, timeString)
 	if err != nil {

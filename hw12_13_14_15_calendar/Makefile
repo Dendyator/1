@@ -45,7 +45,6 @@ run-scheduler:
 run-sender:
 	docker run --network calendar_network --name calendar_sender_service --rm calendar:develop /opt/calendar/calendar-sender-app -config /app/configs/sender_config.yaml
 
-
 run: run-db wait-db run-rabbitmq wait-rabbitmq stop-old-container build-img
 	@trap 'docker stop calendar_service' SIGINT; \
 	if [ "$(docker ps -q -f name=calendar_service)" ]; then \
@@ -53,7 +52,6 @@ run: run-db wait-db run-rabbitmq wait-rabbitmq stop-old-container build-img
 		docker rm calendar_service; \
 	fi; \
 	docker run --network calendar_network -p 8080:8080 -p 50051:50051 --name calendar_service --rm $(DOCKER_IMG)
-
 
 stop-old-container:
 	@docker ps -q -f name=calendar_service | xargs -r docker stop
@@ -64,6 +62,12 @@ run-img: run-db build-img
 
 generate:
 	protoc -I=api --go_out=api/pb --go-grpc_out=api/pb api/*.proto
+
+up: build
+	@docker-compose -f deployments/docker-compose.yaml up --build
+
+down:
+	@docker-compose -f deployments/docker-compose.yaml down --remove-orphans
 
 version: build
 	$(BIN) version
@@ -82,4 +86,13 @@ lint: install-lint-deps
 migrate:
 	docker exec -it calendar_service goose -dir /migrations postgres "postgres://user:password@db:5432/calendar?sslmode=disable" up
 
-.PHONY: build build-scheduler build-sender build-img run run-db run
+integration-tests:
+	docker-compose -f deployments/docker-compose.test.yaml up --build -d
+	@sleep 10
+	@EXIT_CODE=0; \
+	docker-compose -f deployments/docker-compose.test.yaml run --rm integration_tests || EXIT_CODE=$$?; \
+	docker-compose -f deployments/docker-compose.test.yaml down --volumes; \
+	echo "Integration tests exited with code: $$EXIT_CODE"; \
+	exit $$EXIT_CODE
+
+.PHONY: build build-img run run-db wait-db run-rabbitmq wait-rabbitmq run-scheduler run-sender run-img generate up down version test install-lint-deps lint migrate integration-tests

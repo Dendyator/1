@@ -89,11 +89,20 @@ services:
     networks:
       - calendar_network
 
+  integration_tests:
+    build:
+      context: ../
+      dockerfile: integration_tests/Dockerfile
+    networks:
+      - calendar_network
+    depends_on:
+      - calendar
+      - scheduler_service
+      - sender_service
 
 networks:
   calendar_network:
     driver: bridge
-    name: calendar_network
 
 volumes:
   db_data:
