@@ -2,21 +2,25 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"log"
 	"os"
 	"testing"
+  
+	"github.com/stretchr/testify/require"
 )
+
+const toPath = "./testdata/out.txt"
 
 func TestCopy(t *testing.T) {
 	t.Run("bad file", func(t *testing.T) {
-		fromPath = "D:/Coding/Projects/NinjaProject/Uroki/Les1/input1.txt"
-		toPath = "D:/Coding/Projects/NinjaProject/Uroki/Les1/output.txt"
-		offset = 6000
-		limit = 10000
+		fromPath := "./testdata/input1.txt"
 
-		err := Copy(fromPath, toPath, 5000, 10000)
+		offset = 6000
+		limit = 0
+
+		err := Copy(fromPath, toPath, offset, limit)
+
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -27,7 +31,9 @@ func TestCopy(t *testing.T) {
 
 func TestCopy2(t *testing.T) {
 	t.Run("big offset", func(t *testing.T) {
-		fromPath = "D:/Coding/Projects/NinjaProject/Uroki/Les1/input.txt"
+
+		fromPath := "./testdata/input.txt"
+
 		offset = 8000
 		limit = 0
 
@@ -41,9 +47,9 @@ func TestCopy2(t *testing.T) {
 }
 
 func TestCopy3(t *testing.T) {
-	t.Run("big offset", func(t *testing.T) {
-		fromPath = "D:/Coding/Projects/NinjaProject/Uroki/Les1/input.txt"
-		toPath = "D:/Coding/Projects/NinjaProject/Uroki/Les1/output.txt"
+	t.Run("len new file", func(t *testing.T) {
+		fromPath := "./testdata/input.txt"
+
 		offset = 3000
 		limit = 1000
 
@@ -63,5 +69,7 @@ func TestCopy3(t *testing.T) {
 		}
 
 		require.Len(t, buf, 1000)
+		require.NoError(t, err)
+
 	})
 }

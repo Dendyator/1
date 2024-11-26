@@ -1,20 +1,45 @@
 package logger
 
-import "fmt"
+import (
+	"os"
+	"time"
 
-type Logger struct { // TODO
+	"github.com/sirupsen/logrus" //nolint:depguard
+)
+
+type Logger struct {
+	*logrus.Logger
 }
 
 func New(level string) *Logger {
-	return &Logger{}
+	logger := logrus.New()
+
+	lvl, err := logrus.ParseLevel(level)
+	if err != nil {
+		lvl = logrus.InfoLevel
+	}
+	logger.SetLevel(lvl)
+
+	logger.SetOutput(os.Stdout)
+
+	logger.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.RFC3339,
+		PadLevelText:    true,
+	})
+
+	logger.Hooks.Add(&timeZoneHook{})
+
+	return &Logger{logger}
 }
 
-func (l Logger) Info(msg string) {
-	fmt.Println(msg)
+type timeZoneHook struct{}
+
+func (h *timeZoneHook) Levels() []logrus.Level {
+	return logrus.AllLevels
 }
 
-func (l Logger) Error(msg string) {
-	// TODO
+func (h *timeZoneHook) Fire(entry *logrus.Entry) error {
+	entry.Time = entry.Time.Local()
+	return nil
 }
-
-// TODO

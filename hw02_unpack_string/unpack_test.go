@@ -9,7 +9,8 @@ import (
 
 func TestUnpack(t *testing.T) {
 	tests := []struct {
-		input    string
+		input string
+
 		expected string
 	}{
 		{input: "a4bc2d5e", expected: "aaaabccddddde"},
@@ -18,6 +19,9 @@ func TestUnpack(t *testing.T) {
 		{input: "aaa0b", expected: "aab"},
 		{input: "abc1d3e", expected: "abcddde"},
 		{input: "d\n5abc", expected: "d\n\n\n\n\nabc"},
+		{input: "১২৩", expected: "১২৩"},
+		{input: "🙂9", expected: "🙂🙂🙂🙂🙂🙂🙂🙂🙂"},
+		{input: "สวัสดี", expected: "สวัสดี"},
 		// uncomment if task with asterisk completed
 		// {input: `qwe\4\5`, expected: `qwe45`},
 		// {input: `qwe\45`, expected: `qwe44444`},
@@ -26,9 +30,8 @@ func TestUnpack(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.input, func(t *testing.T) {
-			result, err := Unpack(tc.input)
+			result, err := UnpackString(tc.input)
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, result)
 		})
@@ -38,9 +41,8 @@ func TestUnpack(t *testing.T) {
 func TestUnpackInvalidString(t *testing.T) {
 	invalidStrings := []string{"3abc", "45", "aaa10b"}
 	for _, tc := range invalidStrings {
-		tc := tc
 		t.Run(tc, func(t *testing.T) {
-			_, err := Unpack(tc)
+			_, err := UnpackString(tc)
 			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
 		})
 	}

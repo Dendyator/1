@@ -19,7 +19,7 @@ const (
 )
 
 // go test -v -count=1 -timeout=30s -tags bench .
-func TestGetDomainStat_Time_And_Memory(t *testing.T) {
+func TestGetDomainStat_Time_And_MemoryNew(t *testing.T) {
 	bench := func(b *testing.B) {
 		b.Helper()
 		b.StopTimer()
@@ -34,7 +34,7 @@ func TestGetDomainStat_Time_And_Memory(t *testing.T) {
 		require.NoError(t, err)
 
 		b.StartTimer()
-		stat, err := GetDomainStat(data, "biz")
+		stat, err := GetDomainStatNew(data, "biz")
 		b.StopTimer()
 		require.NoError(t, err)
 

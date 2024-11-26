@@ -10,19 +10,18 @@ linters-settings:
     statements: 80
   depguard:
     rules:
-      main:
+      Main:
         files:
           - $all
           - "!$test"
         allow:
           - $gostd
-          - github.com/google # all google packages
-      test:
+      Test:
         files:
-          - "$test"
+          - $test
         allow:
           - $gostd
-          - github.com/stretchr
+          - github.com/stretchr/testify
 issues:
   exclude-rules:
     - path: _test\.go
@@ -43,12 +42,11 @@ linters:
     - durationcheck
     - errorlint
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - funlen
     - gci
     - gocognit
     - goconst
-    - gocritic
     - gocyclo
     - godot
     - gofmt
