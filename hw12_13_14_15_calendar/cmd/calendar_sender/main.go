@@ -24,15 +24,12 @@ type NotificationStatus struct {
 }
 
 func main() {
-	// Путь к файлу конфигурации через флаги
 	configPath := flag.String("config", "configs/sender_config.yaml", "Path to configuration file")
 	flag.Parse()
 
-	// Загрузка конфигурации и инициализация логгера
 	cfg := config.LoadConfig(*configPath)
 	logg := logger.New(cfg.Logger.Level)
 
-	// Создание instance клиента для подключения к RabbitMQ
 	rabbit, err := rabbitmq.New(cfg.RabbitMQ.DSN, logg)
 	if err != nil {
 		logg.Error("Failed to connect to RabbitMQ: " + err.Error())
@@ -43,7 +40,6 @@ func main() {
 		logg.Info("RabbitMQ connection closed")
 	}()
 
-	// Объявление очередей
 	err = rabbit.DeclareQueue("notifications")
 	if err != nil {
 		logg.Error("Failed to declare RabbitMQ queue: " + err.Error())
@@ -56,7 +52,6 @@ func main() {
 		return
 	}
 
-	// Потребление сообщений из очереди "notifications"
 	deliveries, err := rabbit.Consume("notifications")
 	if err != nil {
 		logg.Error("Failed to consume from RabbitMQ: " + err.Error())
@@ -85,7 +80,6 @@ func processNotification(rabbit *rabbitmq.Client, body []byte) error {
 
 	fmt.Println("Processing notification:", notification)
 
-	// Обработка уведомления и отправка статуса
 	status := NotificationStatus{
 		EventID: notification.EventID,
 		Status:  "processed",
