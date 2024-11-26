@@ -1,6 +1,6 @@
 module github.com/Dendyator/1/hw02_unpack_string
 
-go 1.19
+go 1.22
 
 require github.com/stretchr/testify v1.7.0
 
