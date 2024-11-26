@@ -8,9 +8,6 @@ import (
 	"net/http"
 	"os/signal"
 	"syscall"
-	"time"
-
-	_ "github.com/lib/pq" //nolint
 
 	api "github.com/Dendyator/1/hw12_13_14_15_calendar/api/pb"                            //nolint
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/config"                       //nolint
@@ -20,24 +17,31 @@ import (
 	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage"                      //nolint
 	memorystorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
 	sqlstorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/sql"       //nolint
-	"google.golang.org/grpc"
+	_ "github.com/jackc/pgx/v4/stdlib"                                                    //nolint
+	_ "github.com/lib/pq"                                                                 //nolint
+	"google.golang.org/grpc"                                                              //nolint
+	"google.golang.org/grpc/reflection"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/calendar_config.yaml", "Path to configuration file")
 }
 
 func main() {
+	versionFlag := flag.Bool("version", false, "Display version information")
 	flag.Parse()
+
+	if *versionFlag {
+		printVersion()
+		return
+	}
 
 	cfg := config.LoadConfig(configFile)
 	logg := logger.New(cfg.Logger.Level)
 
 	logg.Info("Using DSN: " + cfg.Database.DSN)
-
-	time.Sleep(5 * time.Second)
 
 	var store storage.Interface
 	if cfg.Database.Driver == "in-memory" {
@@ -53,16 +57,15 @@ func main() {
 		logg.Info("Using SQL storage")
 	}
 
-	serverCfg := internalhttp.ServerConfig{
+	httpServer := internalhttp.NewServer(internalhttp.ServerConfig{
 		Host: cfg.Server.Host,
 		Port: cfg.Server.Port,
-	}
-
-	httpServer := internalhttp.NewServer(serverCfg, logg, store)
+	}, logg, store)
 
 	grpcServer := grpc.NewServer()
 	apiServer := internalgrpc.NewGRPCServer(store, logg)
 	api.RegisterEventServiceServer(grpcServer, apiServer)
+	reflection.Register(grpcServer)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
@@ -70,10 +73,7 @@ func main() {
 	go func() {
 		<-ctx.Done()
 
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
-
-		if err := httpServer.Stop(timeoutCtx); err != nil {
+		if err := httpServer.Stop(context.Background()); err != nil {
 			logg.Error("Failed to stop HTTP server: " + err.Error())
 		}
 
@@ -81,19 +81,19 @@ func main() {
 	}()
 
 	go func() {
-		listener, err := net.Listen("tcp", ":50051") //nolint
+		listener, err := net.Listen("tcp", cfg.GRPC.Host+":"+cfg.GRPC.Port)
 		if err != nil {
 			logg.Error("Failed to listen on port 50051: " + err.Error())
 			return
 		}
-		logg.Info("GRPC server is running on port 50051...")
+		logg.Info("GRPC server is running on port " + cfg.GRPC.Port + "...")
 		if err := grpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			logg.Error("Failed to start GRPC server: " + err.Error())
 			return
 		}
 	}()
 
-	logg.Info("Calendar server is running...")
+	logg.Info("Calendar server is running on HTTP port " + cfg.Server.Port + "...")
 	if err := httpServer.Start(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logg.Error("Failed to start HTTP server: " + err.Error())
 		return
