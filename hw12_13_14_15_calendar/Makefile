@@ -95,4 +95,6 @@ integration-tests:
 	echo "Integration tests exited with code: $$EXIT_CODE"; \
 	exit $$EXIT_CODE
 
+
 .PHONY: build build-img run run-db wait-db run-rabbitmq wait-rabbitmq run-scheduler run-sender run-img generate up down version test install-lint-deps lint migrate integration-tests
+
