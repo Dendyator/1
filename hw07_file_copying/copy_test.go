@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"testing"
-
+  
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,6 +20,7 @@ func TestCopy(t *testing.T) {
 		limit = 0
 
 		err := Copy(fromPath, toPath, offset, limit)
+
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -30,7 +31,9 @@ func TestCopy(t *testing.T) {
 
 func TestCopy2(t *testing.T) {
 	t.Run("big offset", func(t *testing.T) {
+
 		fromPath := "./testdata/input.txt"
+
 		offset = 8000
 		limit = 0
 
@@ -46,6 +49,7 @@ func TestCopy2(t *testing.T) {
 func TestCopy3(t *testing.T) {
 	t.Run("len new file", func(t *testing.T) {
 		fromPath := "./testdata/input.txt"
+
 		offset = 3000
 		limit = 1000
 
@@ -66,5 +70,6 @@ func TestCopy3(t *testing.T) {
 
 		require.Len(t, buf, 1000)
 		require.NoError(t, err)
+
 	})
 }
