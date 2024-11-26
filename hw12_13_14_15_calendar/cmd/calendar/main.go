@@ -2,60 +2,78 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
-	"os"
+	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	_ "github.com/lib/pq" //nolint
+
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/config"  //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/logger"  //nolint
+	"github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage" //nolint
+
+	internalhttp "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/server/http"     //nolint
+	memorystorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/memory" //nolint
+	sqlstorage "github.com/Dendyator/1/hw12_13_14_15_calendar/internal/storage/sql"       //nolint
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
 }
 
 func main() {
 	flag.Parse()
 
-	if flag.Arg(0) == "version" {
-		printVersion()
-		return
+	cfg := config.LoadConfig(configFile)
+	logg := logger.New(cfg.Logger.Level)
+
+	logg.Info("Using DSN: " + cfg.Database.DSN)
+
+	time.Sleep(5 * time.Second)
+
+	var store storage.Interface
+	if cfg.Database.Driver == "in-memory" {
+		store = memorystorage.New()
+		logg.Info("Using in-memory storage")
+	} else {
+		var err error
+		store, err = sqlstorage.New(cfg.Database.DSN)
+		if err != nil {
+			logg.Error("Failed to initialize SQL storage: " + err.Error())
+			return
+		}
+		logg.Info("Using SQL storage")
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	serverCfg := internalhttp.ServerConfig{
+		Host: cfg.Server.Host,
+		Port: cfg.Server.Port,
+	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	server := internalhttp.NewServer(serverCfg, logg, store)
 
-	server := internalhttp.NewServer(logg, calendar)
-
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
 	go func() {
 		<-ctx.Done()
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		if err := server.Stop(timeoutCtx); err != nil {
+			logg.Error("Failed to stop HTTP server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
-
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
+	logg.Info("Calendar server is running...")
+	if err := server.Start(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logg.Error("Failed to start HTTP server: " + err.Error())
+		return
 	}
 }
