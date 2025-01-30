@@ -8,13 +8,13 @@ import (
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
-type Task func() error
+type Task func() error // Определяем тип Task как функцию, которая возвращает ошибку.
 
-// Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
+// Run запускает задачи в n горутинах и прекращает работу при получении m ошибок от задач.
 func Run(tasks []Task, n, m int) error {
 	wg := sync.WaitGroup{}
-	tasksCh := make(chan Task)
-	errorsCh := make(chan error)
+	tasksCh := make(chan Task)   // Канал для передачи задач в горутины.
+	errorsCh := make(chan error) // Канал для передачи ошибок от горутин.
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -24,59 +24,62 @@ func Run(tasks []Task, n, m int) error {
 		go worker(ctx, tasksCh, errorsCh, &wg)
 	}
 
+	// Запускаем горутину для передачи задач в tasksCh.
 	go func() {
-		defer close(tasksCh)
+		defer close(tasksCh) // Закрываем tasksCh по завершении функции.
 
+		// Проходим по всем задачам и отправляем их в tasksCh.
 		for _, task := range tasks {
-			if ctx.Err() != nil {
-				return
+			if ctx.Err() != nil { // Проверяем, не отменен ли контекст.
+				return // Если отменен, выходим из функции.
 			}
 			select {
-			case <-ctx.Done():
-				return
-			case tasksCh <- task:
+			case <-ctx.Done(): // Проверяем, не отменен ли контекст.
+				return // Если отменен, выходим из функции.
+			case tasksCh <- task: // Отправляем задачу в tasksCh.
 			}
 		}
 	}()
 
-	isError := make(chan bool, 1)
+	isError := make(chan bool, 1) // Канал для информирования о превышении лимита ошибок.
 	go func() {
-		defer close(isError)
+		defer close(isError) // Закрываем isError по завершении функции.
 
-		errorsCount := 0
-		for range errorsCh {
-			errorsCount++
-			if errorsCount == m {
-				isError <- true
-				cancel()
+		errorsCount := 0     // Счетчик ошибок.
+		for range errorsCh { // Проходим по всем ошибкам из errorsCh.
+			errorsCount++         // Увеличиваем счетчик ошибок.
+			if errorsCount == m { // Если достигнут лимит ошибок m,
+				isError <- true // Отправляем сигнал в isError.
+				cancel()        // Отменяем контекст, чтобы остановить работу горутин.
 			}
 		}
 	}()
 
 	wg.Wait()
-	close(errorsCh)
+	close(errorsCh) // Закрываем errorsCh.
 
-	if <-isError {
-		return ErrErrorsLimitExceeded
+	if <-isError { // Проверяем, был ли сигнал из канала о превышении лимита ошибок.
+		return ErrErrorsLimitExceeded // Возвращаем ошибку о превышении лимита ошибок.
 	}
 
-	return nil
+	return nil // Если ошибок не было или лимит не превышен, возвращаем nil.
 }
 
+// worker выполняет задачи из tasksCh и отправляет ошибки в errorsCh.
 func worker(ctx context.Context, tasks <-chan Task, errors chan<- error, wg *sync.WaitGroup) {
-	defer wg.Done()
+	defer wg.Done() // Уменьшаем счетчик WaitGroup при завершении функции.
 
 	for {
 		select {
-		case <-ctx.Done():
-			return
-		case task, ok := <-tasks:
-			if !ok {
-				return
+		case <-ctx.Done(): // Проверяем, не отменен ли контекст.
+			return // Если отменен, выходим из функции.
+		case task, ok := <-tasks: // Получаем задачу из tasksCh.
+			if !ok { // Если tasksCh закрыт,
+				return // выходим из функции.
 			}
-			err := task()
-			if err != nil {
-				errors <- err
+			err := task()   // Выполняем задачу.
+			if err != nil { // Если произошла ошибка,
+				errors <- err // Отправляем ошибку в errorsCh.
 			}
 		}
 	}
